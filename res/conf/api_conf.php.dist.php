@@ -1,0 +1,10 @@
+<?php
+return [
+	'TELEGRAM_API_TOKEN'      => '112233445:AABBCCDDEEFFGGHHIIJJKKLLMMNNOOPPQQR',
+	'TELEGRAM_API_LIMIT'      => '100',
+	'TELEGRAM_API_TIMEOUT'    => '10',
+	'TELEGRAM_API_USERNAME'   => 'usernamebot',
+	'FOOTBALL_DATA_API_TOKEN' => 'aabbccddee11223344556677889900d',
+	//EURO 2016
+	'FOOTBALL_DATA_ROOT_URL'  => 'http://api.football-data.org/v1/soccerseasons/424'
+];

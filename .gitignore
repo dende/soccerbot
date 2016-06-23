@@ -1,0 +1,6 @@
+/res/conf/propel.yml
+/res/conf/propel/config.php
+/res/conf/api_config.php
+/vendor/
+/.idea/
+/var/log/em2016tippbot.log

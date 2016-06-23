@@ -1,0 +1,54 @@
+<database name="default" defaultIdMethod="native"
+          xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+          xsi:noNamespaceSchemaLocation="http://xsd.propelorm.org/1.6/database.xsd"
+          namespace="Dende\SoccerBot\Model">
+
+    <table name="teams" phpName="Team">
+        <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
+        <column name="name" type="varchar" size="255" required="true"/>
+        <column name="code" type="varchar" size="5" required="true"/>
+    </table>
+
+    <table name="matches" phpName="Match">
+        <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true"/>
+        <column name="home_team_id" type="integer" required="true"/>
+        <column name="away_team_id" type="integer" required="true"/>
+        <column name="home_team_goals" type="integer" required="true"/>
+        <column name="away_team_goals" type="integer" required="true"/>
+        <column name="status" type="varchar" required="true"/>
+        <column name="date" type="timestamp" required="true"/>
+        <column name="url" type="varchar" required="true"/>
+        <foreign-key foreignTable="teams" phpName="HomeTeam">
+            <reference local="home_team_id" foreign="id"/>
+        </foreign-key>
+        <foreign-key foreignTable="teams" phpName="AwayTeam">
+            <reference local="away_team_id" foreign="id"/>
+        </foreign-key>
+        <unique>
+            <unique-column name="home_team_id"/>
+            <unique-column name="away_team_id"/>
+            <unique-column name="date"/>
+        </unique>
+    </table>
+
+    <table name="privatechats" phpName="PrivateChat">
+        <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true" />
+        <column name="chat_id" type="integer" required="true"/>
+        <column name="type" type="varchar" size="20" required="true" />
+        <column name="state" type="varchar" size="50" required="true" />
+        <unique>
+            <unique-column name="chat_id"/>
+        </unique>
+    </table>
+
+    <table name="groupchats" phpName="GroupChat">
+        <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true" />
+        <column name="chat_id" type="integer" required="true"/>
+        <column name="type" type="varchar" size="20" required="true" />
+        <column name="state" type="varchar" size="50" required="true" />
+        <unique>
+            <unique-column name="chat_id"/>
+        </unique>
+    </table>
+
+</database>

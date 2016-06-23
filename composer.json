@@ -1,0 +1,17 @@
+{
+    "require": {
+        "irazasyed/telegram-bot-sdk": "^2.0",
+        "propel/propel": "~2.0@dev",
+        "guzzlehttp/guzzle": "~6.0",
+        "raveren/kint": "^1.0",
+        "monolog/monolog": "^1.19",
+        "nesbot/carbon": "^1.21",
+        "yohang/finite": "~1.1",
+        "illuminate/support": "^5.2",
+        "symfony/translation": "^3.1",
+        "symfony/config": "^3.1"
+    },
+  "autoload": {
+    "psr-4": {"Dende\\SoccerBot\\": "src/Dende/SoccerBot/"}
+  }
+}
