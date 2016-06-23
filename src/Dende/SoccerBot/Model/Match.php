@@ -17,4 +17,10 @@ use Dende\SoccerBot\Model\Base\Match as BaseMatch;
 class Match extends BaseMatch
 {
 
+    public function __construct()
+    {
+        $this->setHomeTeamGoals(0);
+        $this->setAwayTeamGoals(0);
+    }
+
 }

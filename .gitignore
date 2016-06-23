@@ -3,4 +3,5 @@
 /res/conf/api_config.php
 /vendor/
 /.idea/
-/var/log/em2016tippbot.log
+/var/log/*
+/res/db/*
