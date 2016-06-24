@@ -8,18 +8,19 @@
 
 propel:
     paths:
-        # The directory where Propel expects to find your `schema.xml` file.
-        schemaDir: /home/c/code/php/telegrambot/database
-
-        # The directory where Propel should output generated object model classes.
-        phpDir: /home/c/code/php/telegrambot/models
-
-#   database:
-#       connections:
-#           default:
-#               adapter: mysql
-#               dsn: mysql:host=localhost;port=3306;dbname=em2016tippbot
-#               user: em2016tippbot
-#               password:
-#               settings:
-#                   charset: utf8
+        schemaDir: ../../res/conf
+        phpDir: ../../src
+        phpConfDir: ../../res/conf/propel
+        sqlDir: ../../res/db
+    database:
+        connections:
+            default:
+                adapter: sqlite
+                user:
+                password:
+                dsn: sqlite:../../db/soccerbot.sq3
+                settings:
+                    charset: utf8
+    generator:
+        schema:
+            autoPackage: true
