@@ -65,7 +65,11 @@ class SoccerBot
 
 	function handle(TelegramUpdate $update){
 		$this->offset = $update->getUpdateId() + 1;
-		$chatId = $update->getMessage()->getChat()->getId();
+		$message = $update->getMessage();
+		if(!$message){
+			return;
+		}
+		$chatId = $message->getChat()->getId();
 		$chat = null;
 
 		try{
@@ -83,7 +87,6 @@ class SoccerBot
 		}
 
 		$this->handleChat($chat, $update);
-
 	}
 
 	private function handleChat($chat, $update)
@@ -126,7 +129,6 @@ class SoccerBot
 		if (is_null($message)){
 			return;
 		}
-
 		$newChatParticipant = $message->getNewChatParticipant();
 		if (!is_null($newChatParticipant)) {
 			if ($newChatParticipant->getUsername() == $this->api_config['TELEGRAM_API_USERNAME']){
@@ -149,6 +151,7 @@ class SoccerBot
 			if (array_get($entity, 'type') == 'bot_command'){
 				//command found
 				$command = substr($text, array_get($entity, 'offset'), array_get($entity, 'length'));
+				$args = explode(' ', substr($text, array_get($entity, 'length')+1));
 				if (substr($command,0,1) != '/'){
 					$this->log->warn("Wrong type of Command");
 					return;
@@ -180,7 +183,7 @@ class SoccerBot
 					if ($fsm->getCurrentState() == "muted"){
 						$this->log->info("Overriding mute");
 						if ($command == "next"){
-							$this->nextCommand($chat);
+							$this->nextCommand($chat, $args);
 						} else if ($command == "info"){
 							$this->infoCommand($chat);
 						} else if ($command == "curr"){
@@ -614,11 +617,21 @@ class SoccerBot
 
 	}
 
-	private function nextCommand($chat)
+	private function nextCommand($chat, $args)
 	{
-		$nextMatch = MatchQuery::create()->where('matches.status = ?', 'TIMED')->orderByDate()->findOne();
-		$difference = Helper::timeDifference($nextMatch->getDate());
-		$message = "Das nächste Spiel ist *{$nextMatch->getHomeTeam()->getName()}* {$nextMatch->getHomeTeam()->getEmoji()} gegen {$nextMatch->getAwayTeam()->getEmoji()} *{$nextMatch->getAwayTeam()->getName()}* und beginnt in {$difference}.";
+		$m = ($args && is_numeric($args[0])) ? $args[0] : 1;
+		$i = 0;
+		$message = ($m==1) ? "Das nächste Spiel ist " : "Die nächsten Spiele sind:\n";
+		$nextMatches = MatchQuery::create()->where('matches.status = ?', 'TIMED')->orderByDate()->find();
+		foreach ($nextMatches as $nextMatch){
+			$difference = Helper::timeDifference($nextMatch->getDate());
+			$message .= "*{$nextMatch->getHomeTeam()->getName()}* {$nextMatch->getHomeTeam()->getEmoji()} gegen {$nextMatch->getAwayTeam()->getEmoji()} *{$nextMatch->getAwayTeam()->getName()}*(Beginnt in {$difference})";
+			$i++;
+			if ($i < $m)
+				$message .= "\n";
+			else
+				break;
+		}
 		$this->sendMessage($message, $chat);
 	}
 
