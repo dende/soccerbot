@@ -65,7 +65,11 @@ class SoccerBot
 
 	function handle(TelegramUpdate $update){
 		$this->offset = $update->getUpdateId() + 1;
-		$chatId = $update->getMessage()->getChat()->getId();
+		$message = $update->getMessage();
+		if(!$message){
+			return;
+		}
+		$chatId = $message->getChat()->getId();
 		$chat = null;
 
 		try{
@@ -83,7 +87,6 @@ class SoccerBot
 		}
 
 		$this->handleChat($chat, $update);
-
 	}
 
 	private function handleChat($chat, $update)
