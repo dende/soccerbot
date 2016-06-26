@@ -40,7 +40,7 @@ class SoccerBot
 	/** @var  \Finite\Loader\ArrayLoader */
 	protected $groupChatLoader;
 	/** @var  \Symfony\Component\Translation\Translator */
-	protected $translator;
+	protected $lang;
 	protected $states;
 
 	function init(){
@@ -56,7 +56,11 @@ class SoccerBot
 	function run(){
 		while (true){
 			$this->updateMatches();
-			$updates = $this->telegram->getUpdates(['offset' => $this->offset, 'limit' => $this->api_config['TELEGRAM_API_LIMIT'], 'timeout' => $this->api_config['TELEGRAM_API_TIMEOUT']]);
+			$updates = $this->telegram->getUpdates([
+                'offset' => $this->offset,
+                'limit' => array_get($this->api_config, 'TELEGRAM_API_LIMIT'),
+                'timeout' => array_get($this->api_config, 'TELEGRAM_API_TIMEOUT')
+            ]);
 			foreach ($updates as $update){
 				$this->handle($update);
 			}
@@ -98,7 +102,7 @@ class SoccerBot
 
 		if ($chat instanceof PrivateChat){
 			if (array_key_exists($chatId, $this->states)){
-				$fsm = $this->states['private'][$chatId];
+				$fsm = array_get($this->states, 'private.' . $chatId);
 			} else {
 				$fsm = new FiniteStateMachine($chat);
 				$this->privateChatLoader->load($fsm);
@@ -109,12 +113,13 @@ class SoccerBot
 			$this->handlePrivateChat($chat, $update, $fsm);
 		} else if ($chat instanceof GroupChat){
 			if (array_key_exists($chatId, $this->states)){
-				$fsm = $this->states['group'][$chatId];
-			} else {
+                $fsm = array_get($this->states, 'group.' . $chatId);
+            } else {
 				$fsm = new FiniteStateMachine($chat);
 				$this->groupChatLoader->load($fsm);
 				$fsm->initialize();
 				$this->initGroupFSM($fsm);
+                array_set($this->states, 'group.' . $chatId, $fsm);
 				$this->states['group'][$chatId] = $fsm;
 			}
 			$this->handleGroupChat($chat, $update, $fsm);
@@ -173,7 +178,8 @@ class SoccerBot
 
 				try {
 					$state = $fsm->getCurrentState();
-					$fsm->apply($command, ['chat' => $chat]);
+					$this->log->info("applying transition $command from state $state to {$fsm->getCurrentState()}");
+					$fsm->apply($command, ['chat' => $chat, 'args' => $args]);
 					$this->log->info("applied transition $command from state $state to {$fsm->getCurrentState()}");
 				} catch (\Finite\Exception\StateException $e){
 					$this->log->warn($e->getMessage());
@@ -226,6 +232,7 @@ class SoccerBot
 			if (array_get($entity, 'type') == 'bot_command'){
 				//command found
 				$command = substr($text, array_get($entity, 'offset'), array_get($entity, 'length'));
+				$args = explode(' ', substr($text, array_get($entity, 'length')+1));
 				if (substr($command,0,1) != '/'){
 					$this->log->warn("Wrong type of Command");
 					return;
@@ -247,7 +254,8 @@ class SoccerBot
 
 				try {
 					$state = $fsm->getCurrentState();
-					$fsm->apply($command, ['chat' => $chat]);
+					$this->log->info("applying transition $command from state $state to {$fsm->getCurrentState()}");
+					$fsm->apply($command, ['chat' => $chat, 'args' => $args]);
 					$this->log->info("applied transition $command from state $state to {$fsm->getCurrentState()}");
 				} catch (\Finite\Exception\StateException $e){
 					$this->log->warn($e->getMessage());
@@ -257,7 +265,7 @@ class SoccerBot
 					if ($fsm->getCurrentState() == "muted"){
 						$this->log->info("Overriding mute");
 						if ($command == "next"){
-							$this->nextCommand($chat);
+							$this->nextCommand($chat, $args);
 						} else if ($command == "info"){
 							$this->infoCommand($chat);
 						} else if ($command == "curr"){
@@ -335,16 +343,16 @@ class SoccerBot
 	private function initDb()
 	{
 		if (is_null(TeamQuery::create()->findPk(1))){
-			if (!array_key_exists("_links",$this->rootData) && !array_key_exists("teams", $this->rootData["_links"]) && !array_key_exists("href", $this->rootData["_links"]["teams"]) && empty($data["_links"]["teams"]["href"])){
+            $uri = array_get($this->rootData, '_links.teams.href');
+			if (empty($uri)){
 				$this->error('No Teams found');
 			}
-			$uri = $this->rootData["_links"]["teams"]["href"];
 			$response = $this->client->get($uri, $this->header);
 			$data = json_decode($response->getBody()->getContents(), true);
-			foreach ($data["teams"] as $teamData){
+			foreach (array_get($data, 'teams', []) as $teamData){
 				$team = new Team();
-				$team->setName($teamData["name"]);
-				$team->setCode($teamData["code"]);
+				$team->setName(array_get($teamData, 'name'));
+				$team->setCode(array_get($teamData, 'code'));
 				$team->save();
 			}
 			$this->log->info('Updated the Teams in the database');
@@ -355,10 +363,10 @@ class SoccerBot
 		$matchCount = MatchQuery::create()->count();
 
 		if ($matchCount < $this->rootData["numberOfGames"]){
-			if (!array_key_exists("_links",$this->rootData) && !array_key_exists("fixtures", $this->rootData["_links"]) && !array_key_exists("href", $this->rootData["_links"]["fixtures"]) && empty($this->rootData["_links"]["fixtures"]["href"])){
+            $uri = array_get($this->rootData, '_links.fixtures.href');
+			if (empty($uri)){
 				$this->error('No Fixtures found');
 			}
-			$uri = $this->rootData["_links"]["fixtures"]["href"];
 			$response = $this->client->get($uri, $this->header);
 			$data = json_decode($response->getBody()->getContents(), true);
 			foreach ($data["fixtures"] as $fixtureData){
@@ -377,7 +385,7 @@ class SoccerBot
 				$date->setTimezone(new \DateTimeZone('Europe/Berlin'));
 				$match->setDate($date);
 				$match->setStatus($fixtureData["status"]);
-				$match->setUrl($fixtureData["_links"]["self"]["href"]);
+				$match->setUrl(array_get($fixtureData, '_links.self.href'));
 				$match->save();
 			}
 			$this->log->info('Updated the Matches in the database');
@@ -462,29 +470,28 @@ class SoccerBot
 				$chat = $fsm->getObject();
 
 				if (array_get($newData, 'status') == 'IN_PLAY'){
-					$message .= $this->translator->trans('match.started',['homeTeamName' => $homeTeam->getName(), 'homeTeamEmoji' => $homeTeam->getEmoji(), 'awayTeamName' => $awayTeam->getName(), 'awayTeamEmoji' => $awayTeam->getEmoji()]);
+					$message .= $this->lang->trans('live.matchStarted',['homeTeamName' => $homeTeam->getName(), 'homeTeamEmoji' => $homeTeam->getEmoji(), 'awayTeamName' => $awayTeam->getName(), 'awayTeamEmoji' => $awayTeam->getEmoji()]);
 				}
+
 				if (array_has($newData, 'homeTeamGoalsScored')){
-					$homeTeamGoalsScored = array_get($newData, 'homeTeamGoalsScored');
-					if ($homeTeamGoalsScored == 1){
-						$message .= "*{$homeTeam->getName()}* hat ein Tor gegen *{$awayTeam->getName()}* erzielt.\n";
-					} else {
-						$message .= "*{$homeTeam->getName()}* hat {$homeTeamGoalsScored} Tore gegen *{$awayTeam->getName()}* erzielt.\n";
-					}
-					$message .= "Es steht nun {$homeTeam->getEmoji()}*{$match->getHomeTeamGoals()} - {$match->getAwayTeamGoals()}*{$awayTeam->getEmoji()} ";
-				}
-				if (array_has($newData, 'awayTeamGoalsScored')){
-					$awayTeamGoalsScored = array_get($newData, 'awayTeamGoalsScored');
-					if ($awayTeamGoalsScored == 1) {
-						$message .= "*{$awayTeam->getName()}* hat ein Tor gegen *{$homeTeam->getName()}* erzielt.\n";
-					} else {
-						$message .= "*{$awayTeam->getName()}* hat {$awayTeamGoalsScored}Tore gegen *{$homeTeam->getName()}* erzielt.\n";
-					}
-					$message .= "Es steht nun {$homeTeam->getEmoji()}*{$match->getHomeTeamGoals()} - {$match->getAwayTeamGoals()}*{$awayTeam->getEmoji()} ";
-				}
+                    $goalsScored         = array_get($newData, 'homeTeamGoalsScored');
+                    $teamScoredName      = $homeTeam->getName();
+                    $teamConcededName    = $awayTeam->getName();
+				} else if (array_has($newData, 'awayTeamGoalsScored')){
+                    $goalsScored         = array_get($newData, 'awayTeamGoalsScored');
+                    $teamScoredName      = $awayTeam->getName();
+                    $teamConcededName    = $homeTeam->getName();
+                }
+
+                if (!empty($goalsScored)){
+                    /** @noinspection PhpUndefinedVariableInspection */
+                    $message .= $this->lang->transChoice('live.teamScored', $goalsScored, ['teamScoredName' => $teamScoredName, 'teamConcededName' => $teamConcededName, 'goals' => $goalsScored]);
+                    $message .= $this->lang->trans('live.newScore', ['homeTeamEmoji' => $homeTeam->getEmoji(), 'homeTeamGoals' => $match->getHomeTeamGoals(), 'awayTeamGoals' => $match->getAwayTeamGoals(), 'awayTeamEmoji' => $awayTeam->getEmoji()]);
+                }
+
 				if (array_get($newData, 'status') == 'FINISHED'){
-					$message .= "Das Spiel *{$homeTeam->getName()}* gegen *{$awayTeam->getName()}* ist vorbei.\n";
-					$message .= "Der Endstand lautet {$homeTeam->getEmoji()}*{$match->getHomeTeamGoals()} - {$match->getAwayTeamGoals()}*{$awayTeam->getEmoji()}\n";
+					$message .= $this->lang->trans('live.finished', ['homeTeamName' => $homeTeam->getName(), 'awayTeamName' => $awayTeam->getName()]);
+                    $message .= $this->lang->trans('live.finalScore', ['homeTeamEmoji' => $homeTeam->getEmoji(), 'homeTeamGoals' => $match->getHomeTeamGoals(), 'awayTeamGoals' => $match->getAwayTeamGoals(), 'awayTeamEmoji' => $awayTeam->getEmoji()]);
 				}
 				$this->sendMessage($message, $chat);
 			}
@@ -554,10 +561,11 @@ class SoccerBot
 	function groupChatNextTransition(\Finite\Event\TransitionEvent $e){
 		$params = $e->getProperties();
 		$chat   = array_get($params, 'chat');
+		$args   = array_get($params, 'args');
 		if (is_null($chat)){
 			throw new \Exception("Chat is null");
 		}
-		$this->nextCommand($chat);
+		$this->nextCommand($chat, $args);
 	}
 
 	function privateChatLiveTransition(\Finite\Event\TransitionEvent $e){
@@ -570,19 +578,20 @@ class SoccerBot
 
 	private function liveCommand($chat)
 	{
-		$this->sendMessage("Liveticker eingeschaltet.", $chat);
+        $this->sendMessage($this->lang->trans('live.turnedOn'), $chat);
 	}
 
 	private function muteCommand($chat)
 	{
-		$this->sendMessage("Ich sag jetzt gar nix mehr.", $chat);
+        $this->sendMessage($this->lang->trans('live.turnedOff'), $chat);
 
 	}
 
 	private function infoCommand($chat)
 	/** @var PrivateChat|GroupChat $chat */
 	{
-		$this->sendMessage("Aktueller Status ist {$this->chatIdToFsm($chat->getChatId())->getCurrentState()}", $chat);
+        $message = $this->lang->trans('command.info', ['status' => $this->chatIdToFsm($chat->getChatId())->getCurrentState()]);
+		$this->sendMessage($message, $chat);
 	}
 
 	private function chatIdToFsm($chatId){
@@ -598,20 +607,28 @@ class SoccerBot
 	private function currCommand($chat)
 	{
 		$message = "";
-		$liveMatchesCount = MatchQuery::create()->where('matches.status = ?', 'IN_PLAY')->count();
-		if ($liveMatchesCount > 0){
-			if ($liveMatchesCount == 1){
-				$message .= "Momentan läuft folgendes Spiel:\n";
-			} else {
-				$message .= "Momentan laufen folgende Spiele:\n";
-			}
-			$liveMatches = MatchQuery::create()->where('matches.status = ?', 'IN_PLAY')->find();
+		$currentMatchesCount = MatchQuery::create()->where('matches.status = ?', 'IN_PLAY')->count();
+		if ($currentMatchesCount > 0){
 
-			foreach ($liveMatches as $liveMatch){
-				$message .= "*{$liveMatch->getHomeTeam()->getName()}* {$liveMatch->getHomeTeam()->getEmoji()} gegen {$liveMatch->getAwayTeam()->getEmoji()} *{$liveMatch->getAwayTeam()->getName()}*, es steht *{$liveMatch->getHomeTeamGoals()} - {$liveMatch->getAwayTeamGoals()}*\n";
+            $message .= $this->lang->transChoice('command.curr.currentMatches', $currentMatchesCount);
+
+			$currentMatches = MatchQuery::create()->where('matches.status = ?', 'IN_PLAY')->find();
+
+			foreach ($currentMatches as $currentMatch){
+                $message .= $this->lang->trans(
+                    'command.curr.currentMatch',
+                    [
+                        'homeTeamName'  => $currentMatch->getHomeTeam()->getName(),
+                        'homeTeamEmoji' => $currentMatch->getHomeTeam()->getEmoji(),
+                        'awayTeamEmoji' => $currentMatch->getAwayTeam()->getEmoji(),
+                        'awayTeamName'  => $currentMatch->getAwayTeam()->getName(),
+                        'homeTeamGoals' => $currentMatch->getHomeTeamGoals(),
+                        'awayTeamGoals' => $currentMatch->getAwayTeamGoals()
+                    ]
+                );
 			}
 		} else {
-			$message .= "Momentan läuft kein Spiel";
+			$message .= $this->lang->trans('command.curr.noCurrentMatches');
 		}
 		$this->sendMessage($message, $chat);
 
@@ -621,11 +638,20 @@ class SoccerBot
 	{
 		$m = ($args && is_numeric($args[0])) ? $args[0] : 1;
 		$i = 0;
-		$message = ($m==1) ? "Das nächste Spiel ist " : "Die nächsten Spiele sind:\n";
+		$message = $this->lang->transChoice('command.next.nextMatches', $m) . "\n";
 		$nextMatches = MatchQuery::create()->where('matches.status = ?', 'TIMED')->orderByDate()->find();
 		foreach ($nextMatches as $nextMatch){
 			$difference = Helper::timeDifference($nextMatch->getDate());
-			$message .= "*{$nextMatch->getHomeTeam()->getName()}* {$nextMatch->getHomeTeam()->getEmoji()} gegen {$nextMatch->getAwayTeam()->getEmoji()} *{$nextMatch->getAwayTeam()->getName()}*(Beginnt in {$difference})";
+			$message .= $this->lang->trans(
+				'command.next.nextMatch',
+				[
+					'homeTeamName'  => $nextMatch->getHomeTeam()->getName(),
+					'homeTeamEmoji' => $nextMatch->getHomeTeam()->getEmoji(),
+					'awayTeamEmoji' => $nextMatch->getAwayTeam()->getEmoji(),
+					'awayTeamName'  => $nextMatch->getAwayTeam()->getName(),
+					'difference'    => $difference
+				]
+			);
 			$i++;
 			if ($i < $m)
 				$message .= "\n";
@@ -637,9 +663,9 @@ class SoccerBot
 
 	private function initTranslation()
 	{
-		$this->translator = new Translator('de_DE', new MessageSelector());
-		$this->translator->addLoader('php', new \Symfony\Component\Translation\Loader\PhpFileLoader());
-		$this->translator->addResource('php', 'lang/de_DE.php', 'de_DE');
+		$this->lang = new Translator('de_DE', new MessageSelector());
+		$this->lang->addLoader('php', new \Symfony\Component\Translation\Loader\PhpFileLoader());
+		$this->lang->addResource('php', __DIR__ . '/../../../res/lang/de_DE.php', 'de_DE');
 	}
 
 	private function initConfig()

@@ -27,27 +27,27 @@ return [
 			'live' => [
 				'from' => ['muted'],
 				'to'   => 'liveticker',
-				'properties' => ['chat' => null]
+				'properties' => ['chat' => null, 'args' => null]
 			],
 			'mute' => [
 				'from' => ['liveticker'],
 				'to'   => 'muted',
-				'properties' => ['chat' => null]
+				'properties' => ['chat' => null, 'args' => null]
 			],
 			'info' => [
 				'from' => ['liveticker'],
 				'to'   => 'liveticker',
-				'properties' => ['chat' => null]
+				'properties' => ['chat' => null, 'args' => null]
 			],
 			'curr' => [
 				'from' => ['liveticker'],
 				'to'   => 'liveticker',
-				'properties' => ['chat' => null]
+				'properties' => ['chat' => null, 'args' => null]
 			],
 			'next' => [
 				'from' => ['liveticker'],
 				'to'   => 'liveticker',
-				'properties' => ['chat' => null]
+				'properties' => ['chat' => null, 'args' => null]
 			]
 		]
 	],
@@ -67,27 +67,27 @@ return [
 			'live' => [
 				'from' => ['muted'],
 				'to'   => 'liveticker',
-				'properties' => ['chat' => null]
+				'properties' => ['chat' => null, 'args' => null]
 			],
 			'mute' => [
 				'from' => ['liveticker'],
 				'to'   => 'muted',
-				'properties' => ['chat' => null]
+				'properties' => ['chat' => null, 'args' => null]
 			],
 			'info' => [
 				'from' => ['liveticker'],
 				'to'   => 'liveticker',
-				'properties' => ['chat' => null]
+				'properties' => ['chat' => null, 'args' => null]
 			],
 			'curr' => [
 				'from' => ['liveticker'],
 				'to'   => 'liveticker',
-				'properties' => ['chat' => null]
+				'properties' => ['chat' => null, 'args' => null]
 			],
 			'next' => [
 				'from' => ['liveticker'],
 				'to'   => 'liveticker',
-				'properties' => ['chat' => null]
+				'properties' => ['chat' => null, 'args' => null]
 			]
 		]
 	]
