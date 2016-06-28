@@ -470,7 +470,15 @@ class SoccerBot
 				$chat = $fsm->getObject();
 
 				if (array_get($newData, 'status') == 'IN_PLAY'){
-					$message .= $this->lang->trans('live.matchStarted',['homeTeamName' => $homeTeam->getName(), 'homeTeamEmoji' => $homeTeam->getEmoji(), 'awayTeamName' => $awayTeam->getName(), 'awayTeamEmoji' => $awayTeam->getEmoji()]);
+					$message .= $this->lang->trans(
+                        'live.matchStarted',
+                        [
+                            '%homeTeamName%'  => $homeTeam->getName(),
+                            '%homeTeamEmoji%' => $homeTeam->getEmoji(),
+                            '%awayTeamName%'  => $awayTeam->getName(),
+                            '%awayTeamEmoji%' => $awayTeam->getEmoji()
+                        ]
+                    );
 				}
 
 				if (array_has($newData, 'homeTeamGoalsScored')){
@@ -485,13 +493,43 @@ class SoccerBot
 
                 if (!empty($goalsScored)){
                     /** @noinspection PhpUndefinedVariableInspection */
-                    $message .= $this->lang->transChoice('live.teamScored', $goalsScored, ['teamScoredName' => $teamScoredName, 'teamConcededName' => $teamConcededName, 'goals' => $goalsScored]);
-                    $message .= $this->lang->trans('live.newScore', ['homeTeamEmoji' => $homeTeam->getEmoji(), 'homeTeamGoals' => $match->getHomeTeamGoals(), 'awayTeamGoals' => $match->getAwayTeamGoals(), 'awayTeamEmoji' => $awayTeam->getEmoji()]);
+                    $message .= $this->lang->transChoice(
+                        'live.teamScored',
+                        $goalsScored,
+                        [
+                            '%teamScoredName%'   => $teamScoredName,
+                            '%teamConcededName%' => $teamConcededName,
+                            '%goals%'            => $goalsScored
+                        ]
+                    );
+                    $message .= $this->lang->trans(
+                        'live.newScore',
+                        [
+                            '%homeTeamEmoji%' => $homeTeam->getEmoji(),
+                            '%homeTeamGoals%' => $match->getHomeTeamGoals(),
+                            '%awayTeamGoals%' => $match->getAwayTeamGoals(),
+                            '%awayTeamEmoji%' => $awayTeam->getEmoji()
+                        ]
+                    );
                 }
 
 				if (array_get($newData, 'status') == 'FINISHED'){
-					$message .= $this->lang->trans('live.finished', ['homeTeamName' => $homeTeam->getName(), 'awayTeamName' => $awayTeam->getName()]);
-                    $message .= $this->lang->trans('live.finalScore', ['homeTeamEmoji' => $homeTeam->getEmoji(), 'homeTeamGoals' => $match->getHomeTeamGoals(), 'awayTeamGoals' => $match->getAwayTeamGoals(), 'awayTeamEmoji' => $awayTeam->getEmoji()]);
+					$message .= $this->lang->trans(
+                        'live.finished',
+                        [
+                            '%homeTeamName%' => $homeTeam->getName(),
+                            '%awayTeamName%' => $awayTeam->getName()
+                        ]
+                    );
+                    $message .= $this->lang->trans(
+                        'live.finalScore',
+                        [
+                            '%homeTeamEmoji%' => $homeTeam->getEmoji(),
+                            '%homeTeamGoals%' => $match->getHomeTeamGoals(),
+                            '%awayTeamGoals%' => $match->getAwayTeamGoals(),
+                            '%awayTeamEmoji%' => $awayTeam->getEmoji()
+                        ]
+                    );
 				}
 				$this->sendMessage($message, $chat);
 			}
@@ -618,12 +656,12 @@ class SoccerBot
                 $message .= $this->lang->trans(
                     'command.curr.currentMatch',
                     [
-                        'homeTeamName'  => $currentMatch->getHomeTeam()->getName(),
-                        'homeTeamEmoji' => $currentMatch->getHomeTeam()->getEmoji(),
-                        'awayTeamEmoji' => $currentMatch->getAwayTeam()->getEmoji(),
-                        'awayTeamName'  => $currentMatch->getAwayTeam()->getName(),
-                        'homeTeamGoals' => $currentMatch->getHomeTeamGoals(),
-                        'awayTeamGoals' => $currentMatch->getAwayTeamGoals()
+                        '%homeTeamName%'  => $currentMatch->getHomeTeam()->getName(),
+                        '%homeTeamEmoji%' => $currentMatch->getHomeTeam()->getEmoji(),
+                        '%awayTeamEmoji%' => $currentMatch->getAwayTeam()->getEmoji(),
+                        '%awayTeamName%'  => $currentMatch->getAwayTeam()->getName(),
+                        '%homeTeamGoals%' => $currentMatch->getHomeTeamGoals(),
+                        '%awayTeamGoals%' => $currentMatch->getAwayTeamGoals()
                     ]
                 );
 			}
@@ -645,11 +683,11 @@ class SoccerBot
 			$message .= $this->lang->trans(
 				'command.next.nextMatch',
 				[
-					'homeTeamName'  => $nextMatch->getHomeTeam()->getName(),
-					'homeTeamEmoji' => $nextMatch->getHomeTeam()->getEmoji(),
-					'awayTeamEmoji' => $nextMatch->getAwayTeam()->getEmoji(),
-					'awayTeamName'  => $nextMatch->getAwayTeam()->getName(),
-					'difference'    => $difference
+					'%homeTeamName%'  => $nextMatch->getHomeTeam()->getName(),
+					'%homeTeamEmoji%' => $nextMatch->getHomeTeam()->getEmoji(),
+					'%awayTeamEmoji%' => $nextMatch->getAwayTeam()->getEmoji(),
+					'%awayTeamName%'  => $nextMatch->getAwayTeam()->getName(),
+					'%difference%'    => $difference
 				]
 			);
 			$i++;
