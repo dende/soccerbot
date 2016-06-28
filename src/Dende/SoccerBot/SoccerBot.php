@@ -628,7 +628,7 @@ class SoccerBot
 	private function infoCommand($chat)
 	/** @var PrivateChat|GroupChat $chat */
 	{
-        $message = $this->lang->trans('command.info', ['status' => $this->chatIdToFsm($chat->getChatId())->getCurrentState()]);
+        $message = $this->lang->trans('command.info', ['%status%' => $this->chatIdToFsm($chat->getChatId())->getCurrentState()]);
 		$this->sendMessage($message, $chat);
 	}
 
