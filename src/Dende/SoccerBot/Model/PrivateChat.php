@@ -15,7 +15,7 @@ use Finite\StatefulInterface;
  * long as it does not already exist in the output directory.
  *
  */
-class PrivateChat extends BasePrivateChat implements StatefulInterface
+class PrivateChat extends BasePrivateChat implements StatefulInterface, ChatInterface
 {
 	public static $initialState = 'muted';
 

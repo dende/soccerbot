@@ -11,7 +11,7 @@ return [
 			'php://stdout'
 		]
 	],
-	'FSM_CHAT' => [
+	'FSM_PRIVATECHAT' => [
 		'class'  => 'PrivateChat',
 		'states' => [
 			'liveticker' => [
@@ -34,21 +34,6 @@ return [
 				'to'   => 'muted',
 				'properties' => ['chat' => null, 'args' => null]
 			],
-			'info' => [
-				'from' => ['liveticker'],
-				'to'   => 'liveticker',
-				'properties' => ['chat' => null, 'args' => null]
-			],
-			'curr' => [
-				'from' => ['liveticker'],
-				'to'   => 'liveticker',
-				'properties' => ['chat' => null, 'args' => null]
-			],
-			'next' => [
-				'from' => ['liveticker'],
-				'to'   => 'liveticker',
-				'properties' => ['chat' => null, 'args' => null]
-			]
 		]
 	],
 	'FSM_GROUPCHAT' => [
@@ -74,21 +59,6 @@ return [
 				'to'   => 'muted',
 				'properties' => ['chat' => null, 'args' => null]
 			],
-			'info' => [
-				'from' => ['liveticker'],
-				'to'   => 'liveticker',
-				'properties' => ['chat' => null, 'args' => null]
-			],
-			'curr' => [
-				'from' => ['liveticker'],
-				'to'   => 'liveticker',
-				'properties' => ['chat' => null, 'args' => null]
-			],
-			'next' => [
-				'from' => ['liveticker'],
-				'to'   => 'liveticker',
-				'properties' => ['chat' => null, 'args' => null]
-			]
 		]
 	]
 ];

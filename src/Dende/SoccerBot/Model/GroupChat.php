@@ -15,7 +15,7 @@ use Finite\StatefulInterface;
  * long as it does not already exist in the output directory.
  *
  */
-class GroupChat extends BaseGroupChat implements StatefulInterface
+class GroupChat extends BaseGroupChat implements StatefulInterface, ChatInterface
 {
 	public static $initialState = 'muted';
 

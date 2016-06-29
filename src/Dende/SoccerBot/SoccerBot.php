@@ -2,6 +2,7 @@
 
 namespace Dende\SoccerBot;
 
+use Dende\SoccerBot\Model\ChatFactory;
 use Monolog\Logger;
 use Monolog\Handler\StreamHandler;
 use Telegram\Bot\Api as TelegramApi;
@@ -15,9 +16,7 @@ use Dende\SoccerBot\Model\TeamQuery;
 use Dende\SoccerBot\Model\Match;
 use Dende\SoccerBot\Model\MatchQuery;
 use Dende\SoccerBot\Model\PrivateChat;
-use Dende\SoccerBot\Model\PrivateChatQuery;
 use Dende\SoccerBot\Model\GroupChat;
-use Dende\SoccerBot\Model\GroupChatQuery;
 
 /**
  * Class SoccerBot
@@ -36,10 +35,6 @@ class SoccerBot
 	/** @var \Telegram\Bot\Api */
 	protected $telegram;
 	/** @var  \Finite\Loader\ArrayLoader */
-	protected $privateChatLoader;
-	/** @var  \Finite\Loader\ArrayLoader */
-	protected $groupChatLoader;
-	/** @var  \Symfony\Component\Translation\Translator */
 	protected $lang;
 	protected $states;
 
@@ -69,27 +64,15 @@ class SoccerBot
 
 	function handle(TelegramUpdate $update){
 		$this->offset = $update->getUpdateId() + 1;
+		
 		$message = $update->getMessage();
+		
 		if(!$message){
 			return;
 		}
-		$chatId = $message->getChat()->getId();
-		$chat = null;
-
-		try{
-			$chat = GroupChatQuery::create()->findOneByChatId($chatId);
-		} catch (\Propel\Runtime\Exception\EntityNotFoundException $e){}
-
-		if (is_null($chat)) {
-			try {
-				$chat = PrivateChatQuery::create()->findOneByChatId($chatId);
-			} catch (\Propel\Runtime\Exception\EntityNotFoundException $e) {}
-		}
-
-		if (is_null($chat)) {
-			$chat = $this->newChat($update);
-		}
-
+		
+		$chat = ChatFactory::create($message->getChat());
+		
 		$this->handleChat($chat, $update);
 	}
 
@@ -318,27 +301,6 @@ class SoccerBot
 		throw new \Exception($message);
 	}
 
-	function newChat(TelegramUpdate $update) {
-		$chatType = $update->getMessage()->getChat()->getType();
-
-		switch ($chatType){
-			case "group":
-			case "supergroup":
-			case "channel":
-			default:
-				$chat = new GroupChat();
-				break;
-			case "private":
-				$chat = new PrivateChat();
-				break;
-		}
-
-		$chat->setChatId($update->getMessage()->getChat()->getId());
-		$chat->setType($chatType);
-		$chat->setState($chat::$initialState);
-		$chat->save();
-		return $chat;
-	}
 
 	private function initDb()
 	{
@@ -420,8 +382,6 @@ class SoccerBot
 	private function initStates()
 	{
 		$this->states = ['private' => [], 'group' => []];
-		$this->privateChatLoader = new \Finite\Loader\ArrayLoader($this->config['FSM_CHAT']);
-		$this->groupChatLoader   = new \Finite\Loader\ArrayLoader($this->config['FSM_GROUPCHAT']);
 	}
 
 	private function updateMatch(Match $match){
