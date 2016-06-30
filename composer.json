@@ -6,7 +6,7 @@
         "propel/propel": "~2.0@dev",
         "guzzlehttp/guzzle": "~6.0",
         "raveren/kint": "^1.0",
-        "monolog/monolog": "^1.19",
+        "analog/analog": "dev-master",
         "nesbot/carbon": "^1.21",
         "yohang/finite": "~1.1",
         "illuminate/support": "^5.2",

@@ -2,8 +2,7 @@
 
 namespace Dende\SoccerBot;
 
-use Monolog\Logger;
-use Monolog\Handler\StreamHandler;
+use Analog\Analog;
 use Telegram\Bot\Api as TelegramApi;
 use Telegram\Bot\Objects\Update as TelegramUpdate;
 use Finite\StateMachine\StateMachine as FiniteStateMachine;
@@ -27,8 +26,6 @@ class SoccerBot
 	protected $config;
 	protected $api_config;
 	protected $rootData;
-	/** @var  \Monolog\Logger */
-	protected $log;
 	/** @var  \GuzzleHttp\Client */
 	protected $client;
 	protected $header;
@@ -129,7 +126,7 @@ class SoccerBot
 
 	private function handlePrivateChat(PrivateChat $chat, TelegramUpdate $update, FiniteStateMachine $fsm)
 	{
-		$this->log->info("Handling private update");
+        Analog::log("Handling private update");
 		$message = $update->getMessage();
 		if (is_null($message)){
 			return;
@@ -158,7 +155,7 @@ class SoccerBot
 				$command = substr($text, array_get($entity, 'offset'), array_get($entity, 'length'));
 				$args = explode(' ', substr($text, array_get($entity, 'length')+1));
 				if (substr($command,0,1) != '/'){
-					$this->log->warn("Wrong type of Command");
+                    Analog::log("Wrong type of Command");
 					return;
 				}
 				$command = substr($command,1);
@@ -166,11 +163,11 @@ class SoccerBot
 				if (str_contains($command, '@')){
 					$parts  = explode('@', $command);
 					if (count($parts) != 2){
-						$this->log->warn("Wrong type of Command");
+                        Analog::log("Wrong type of Command");
 						return;
 					}
 					if ($parts[1] != $this->api_config['TELEGRAM_API_USERNAME']){
-						$this->log->warn("Wrong Username");
+                        Analog::log("Wrong Username");
 						return;
 					}
 					$command = $parts[0];
@@ -178,16 +175,16 @@ class SoccerBot
 
 				try {
 					$state = $fsm->getCurrentState();
-					$this->log->info("applying transition $command from state $state to {$fsm->getCurrentState()}");
+                    Analog::log("applying transition $command from state $state to {$fsm->getCurrentState()}");
 					$fsm->apply($command, ['chat' => $chat, 'args' => $args]);
-					$this->log->info("applied transition $command from state $state to {$fsm->getCurrentState()}");
+                    Analog::log("applied transition $command from state $state to {$fsm->getCurrentState()}");
 				} catch (\Finite\Exception\StateException $e){
-					$this->log->warn($e->getMessage());
+                    Analog::log($e->getMessage());
 				} catch (\Finite\Exception\TransitionException $e){
-					$this->log->warn($e->getMessage());
+                    Analog::log($e->getMessage());
 				} finally {
 					if ($fsm->getCurrentState() == "muted"){
-						$this->log->info("Overriding mute");
+                        Analog::log("Overriding mute");
 						if ($command == "next"){
 							$this->nextCommand($chat, $args);
 						} else if ($command == "info"){
@@ -204,7 +201,7 @@ class SoccerBot
 
 	private function handleGroupChat(GroupChat $chat, TelegramUpdate $update, FiniteStateMachine $fsm)
 	{
-		$this->log->info("Handling Group update");
+        Analog::log("Handling Group update");
 		$message = $update->getMessage();
 		if (is_null($message)){
 			return;
@@ -234,7 +231,7 @@ class SoccerBot
 				$command = substr($text, array_get($entity, 'offset'), array_get($entity, 'length'));
 				$args = explode(' ', substr($text, array_get($entity, 'length')+1));
 				if (substr($command,0,1) != '/'){
-					$this->log->warn("Wrong type of Command");
+                    Analog::log("Wrong type of Command");
 					return;
 				}
 				$command = substr($command,1);
@@ -242,11 +239,11 @@ class SoccerBot
 				if (str_contains($command, '@')){
 					$parts  = explode('@', $command);
 					if (count($parts) != 2){
-						$this->log->warn("Wrong type of Command");
+                        Analog::log("Wrong type of Command");
 						return;
 					}
 					if ($parts[1] != $this->api_config['TELEGRAM_API_USERNAME']){
-						$this->log->warn("Wrong Username");
+                        Analog::log("Wrong Username");
 						return;
 					}
 					$command = $parts[0];
@@ -254,16 +251,16 @@ class SoccerBot
 
 				try {
 					$state = $fsm->getCurrentState();
-					$this->log->info("applying transition $command from state $state to {$fsm->getCurrentState()}");
+                    Analog::log("applying transition $command from state $state to {$fsm->getCurrentState()}");
 					$fsm->apply($command, ['chat' => $chat, 'args' => $args]);
-					$this->log->info("applied transition $command from state $state to {$fsm->getCurrentState()}");
+                    Analog::log("applied transition $command from state $state to {$fsm->getCurrentState()}");
 				} catch (\Finite\Exception\StateException $e){
-					$this->log->warn($e->getMessage());
+                    Analog::log($e->getMessage());
 				} catch (\Finite\Exception\TransitionException $e){
-					$this->log->warn($e->getMessage());
+                    Analog::log($e->getMessage());
 				} finally {
 					if ($fsm->getCurrentState() == "muted"){
-						$this->log->info("Overriding mute");
+                        Analog::log("Overriding mute");
 						if ($command == "next"){
 							$this->nextCommand($chat, $args);
 						} else if ($command == "info"){
@@ -278,7 +275,7 @@ class SoccerBot
 	}
 
 	function updateMatches(){
-		$this->log->info("Updating matches");
+        Analog::log("Updating matches");
 		/** @var Match[] $timedMatches */
 		$timedMatches = MatchQuery::create()
 			->where('matches.status = ?', 'TIMED')
@@ -314,7 +311,7 @@ class SoccerBot
 	}
 
 	function error($message){
-		$this->log->error($message);
+        Analog::log($message);
 		throw new \Exception($message);
 	}
 
@@ -355,9 +352,9 @@ class SoccerBot
 				$team->setCode(array_get($teamData, 'code'));
 				$team->save();
 			}
-			$this->log->info('Updated the Teams in the database');
+            Analog::log('Updated the Teams in the database');
 		} else {
-			$this->log->info('No updates for the teams needed');
+            Analog::log('No updates for the teams needed');
 		}
 
 		$matchCount = MatchQuery::create()->count();
@@ -388,19 +385,15 @@ class SoccerBot
 				$match->setUrl(array_get($fixtureData, '_links.self.href'));
 				$match->save();
 			}
-			$this->log->info('Updated the Matches in the database');
+            Analog::log('Updated the Matches in the database');
 		} else {
-			$this->log->info('No updates for the matches needed');
+            Analog::log('No updates for the matches needed');
 		}
 	}
 
 	private function initLog()
 	{
-		$this->log = new Logger('name');
-		foreach ($this->config['log']['streamhandlers'] as $streamhandler){
-			$this->log->pushHandler(new StreamHandler($streamhandler));
-		}
-		$this->log->info('Initializing the EM2016TippBot');
+        Analog::handler (\Analog\Handler\File::init (array_get($this->config, 'log')));
 	}
 
 	private function initTelegramApi()
@@ -607,11 +600,11 @@ class SoccerBot
 	}
 
 	function privateChatLiveTransition(\Finite\Event\TransitionEvent $e){
-		$this->log->warn("Executed from privateChatLiveTransition");
+		Analog::log("Executed from privateChatLiveTransition");
 	}
 
 	function privateMuteTransition(\Finite\Event\TransitionEvent $e){
-		$this->log->warn("Executed from privateMuteTransition");
+        Analog::log("Executed from privateMuteTransition");
 	}
 
 	private function liveCommand($chat)

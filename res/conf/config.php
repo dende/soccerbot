@@ -5,12 +5,7 @@ use Carbon\Carbon;
 setlocale(LC_TIME, 'German');
 Carbon::setLocale("de");
 return [
-	'log' => [
-		'streamhandlers' => [
-			__DIR__ . '/../../var/log/em2016tippbot.log',
-			'php://stdout'
-		]
-	],
+	'log' =>  __DIR__ . '/../../var/log/em2016tippbot.log',
 	'FSM_CHAT' => [
 		'class'  => 'PrivateChat',
 		'states' => [
