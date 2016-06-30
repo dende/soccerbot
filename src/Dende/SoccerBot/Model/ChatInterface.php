@@ -8,8 +8,18 @@
 
 namespace Dende\SoccerBot\Model;
 
+use Monolog\Logger;
+use Telegram\Bot\Objects\Update as TelegramUpdate;
+
 
 interface ChatInterface
 {
+
     public function getChatId();
+
+    public function init();
+    
+    public function restore();
+    
+    public function handle(TelegramUpdate $update);
 }

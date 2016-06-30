@@ -9,7 +9,9 @@
 namespace Dende\SoccerBot\Command;
 
 
+use Dende\SoccerBot\Model\ChatInterface;
+
 interface CommandInterface
 {
-    public function run();
+    public static function run(ChatInterface $chat);
 }

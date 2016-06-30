@@ -2,6 +2,7 @@
 
 namespace Dende\SoccerBot;
 
+use Dende\SoccerBot\Exception;
 use Dende\SoccerBot\Model\ChatFactory;
 use Analog\Analog;
 use Telegram\Bot\Api as TelegramApi;
@@ -31,7 +32,7 @@ class SoccerBot
 	protected $offset;
 	/** @var \Telegram\Bot\Api */
 	protected $telegram;
-	/** @var  \Finite\Loader\ArrayLoader */
+    /** @var  \Symfony\Component\Translation\Translator */
 	protected $lang;
 	protected $states;
 
@@ -42,7 +43,6 @@ class SoccerBot
 		$this->initTelegramApi();
 		$this->initFooballDataApi();
 		$this->initDb();
-		$this->initStates();
 	}
 
 	function run(){
@@ -50,12 +50,23 @@ class SoccerBot
 			$this->updateMatches();
 			$updates = $this->telegram->getUpdates([
                 'offset' => $this->offset,
-                'limit' => array_get($this->api_config, 'TELEGRAM_API_LIMIT'),
-                'timeout' => array_get($this->api_config, 'TELEGRAM_API_TIMEOUT')
+                'limit' => TELEGRAM_BOT_LIMIT,
+                'timeout' => TELEGRAM_BOT_TIMEOUT
             ]);
 			foreach ($updates as $update){
-				$this->handle($update);
-			}
+                try {
+                    $this->handle($update);
+                } catch (Exception\EmptyMessageException $e){
+                    //not too bad
+                } catch (Exception\CommandNotFoundException $e){
+                    //not too bad
+                } catch (Exception\InvalidCommandStringException $e){
+                    //not too bad
+                } catch (\Exception $e){
+                    \Kint::dump($e);
+
+                }
+            }
 		}
 	}
 
@@ -65,197 +76,15 @@ class SoccerBot
 		$message = $update->getMessage();
 		
 		if(!$message){
-			return;
+			throw new Exception\EmptyMessageException();
 		}
 		
 		$chat = ChatFactory::create($message->getChat());
-		
-		$this->handleChat($chat, $update);
-	}
 
-	private function handleChat($chat, $update)
-		/** @var PrivateChat|GroupChat $chat */
-		/** @var TelegramUpdate $update */
-	{
-		$chatId = $chat->getChatId();
-		$fsm = null;
-
-		if ($chat instanceof PrivateChat){
-			if (array_key_exists($chatId, $this->states)){
-				$fsm = array_get($this->states, 'private.' . $chatId);
-			} else {
-				$fsm = new FiniteStateMachine($chat);
-				$this->privateChatLoader->load($fsm);
-				$fsm->initialize();
-				$this->initPrivateFSM($fsm);
-				$this->states['private'][$chatId] = $fsm;
-			}
-			$this->handlePrivateChat($chat, $update, $fsm);
-		} else if ($chat instanceof GroupChat){
-			if (array_key_exists($chatId, $this->states)){
-                $fsm = array_get($this->states, 'group.' . $chatId);
-            } else {
-				$fsm = new FiniteStateMachine($chat);
-				$this->groupChatLoader->load($fsm);
-				$fsm->initialize();
-				$this->initGroupFSM($fsm);
-                array_set($this->states, 'group.' . $chatId, $fsm);
-				$this->states['group'][$chatId] = $fsm;
-			}
-			$this->handleGroupChat($chat, $update, $fsm);
-		}
-	}
-
-
-	private function handlePrivateChat(PrivateChat $chat, TelegramUpdate $update, FiniteStateMachine $fsm)
-	{
-        Analog::log("Handling private update");
-		$message = $update->getMessage();
-		if (is_null($message)){
-			return;
-		}
-		$newChatParticipant = $message->getNewChatParticipant();
-		if (!is_null($newChatParticipant)) {
-			if ($newChatParticipant->getUsername() == $this->api_config['TELEGRAM_API_USERNAME']){
-				//we got added to a group
-				return;
-			}
-		}
-
-		$text = $message->getText();
-		if (is_null($text)){
-			return;
-		}
-
-		$entities = array_get($message->getRawResponse(), 'entities');
-		if (is_null($entities)){
-			return;
-		}
-
-		foreach ($entities as $entity){
-			if (array_get($entity, 'type') == 'bot_command'){
-				//command found
-				$command = substr($text, array_get($entity, 'offset'), array_get($entity, 'length'));
-				$args = explode(' ', substr($text, array_get($entity, 'length')+1));
-				if (substr($command,0,1) != '/'){
-                    Analog::log("Wrong type of Command");
-					return;
-				}
-				$command = substr($command,1);
-
-				if (str_contains($command, '@')){
-					$parts  = explode('@', $command);
-					if (count($parts) != 2){
-                        Analog::log("Wrong type of Command");
-						return;
-					}
-					if ($parts[1] != $this->api_config['TELEGRAM_API_USERNAME']){
-                        Analog::log("Wrong Username");
-						return;
-					}
-					$command = $parts[0];
-				}
-
-				try {
-					$state = $fsm->getCurrentState();
-                    Analog::log("applying transition $command from state $state to {$fsm->getCurrentState()}");
-					$fsm->apply($command, ['chat' => $chat, 'args' => $args]);
-                    Analog::log("applied transition $command from state $state to {$fsm->getCurrentState()}");
-				} catch (\Finite\Exception\StateException $e){
-                    Analog::log($e->getMessage());
-				} catch (\Finite\Exception\TransitionException $e){
-                    Analog::log($e->getMessage());
-				} finally {
-					if ($fsm->getCurrentState() == "muted"){
-                        Analog::log("Overriding mute");
-						if ($command == "next"){
-							$this->nextCommand($chat, $args);
-						} else if ($command == "info"){
-							$this->infoCommand($chat);
-						} else if ($command == "curr"){
-							$this->currCommand($chat);
-						}
-					}
-				}
-			}
-		}
+            $chat->handle($update);
 
 	}
 
-	private function handleGroupChat(GroupChat $chat, TelegramUpdate $update, FiniteStateMachine $fsm)
-	{
-        Analog::log("Handling Group update");
-		$message = $update->getMessage();
-		if (is_null($message)){
-			return;
-		}
-
-		$newChatParticipant = $message->getNewChatParticipant();
-		if (!is_null($newChatParticipant)) {
-			if ($newChatParticipant->getUsername() == $this->api_config['TELEGRAM_API_USERNAME']){
-				//we got added to a group
-				return;
-			}
-		}
-
-		$text = $message->getText();
-		if (is_null($text)){
-			return;
-		}
-
-		$entities = array_get($message->getRawResponse(), 'entities');
-		if (is_null($entities)){
-			return;
-		}
-
-		foreach ($entities as $entity){
-			if (array_get($entity, 'type') == 'bot_command'){
-				//command found
-				$command = substr($text, array_get($entity, 'offset'), array_get($entity, 'length'));
-				$args = explode(' ', substr($text, array_get($entity, 'length')+1));
-				if (substr($command,0,1) != '/'){
-                    Analog::log("Wrong type of Command");
-					return;
-				}
-				$command = substr($command,1);
-				
-				if (str_contains($command, '@')){
-					$parts  = explode('@', $command);
-					if (count($parts) != 2){
-                        Analog::log("Wrong type of Command");
-						return;
-					}
-					if ($parts[1] != $this->api_config['TELEGRAM_API_USERNAME']){
-                        Analog::log("Wrong Username");
-						return;
-					}
-					$command = $parts[0];
-				}
-
-				try {
-					$state = $fsm->getCurrentState();
-                    Analog::log("applying transition $command from state $state to {$fsm->getCurrentState()}");
-					$fsm->apply($command, ['chat' => $chat, 'args' => $args]);
-                    Analog::log("applied transition $command from state $state to {$fsm->getCurrentState()}");
-				} catch (\Finite\Exception\StateException $e){
-                    Analog::log($e->getMessage());
-				} catch (\Finite\Exception\TransitionException $e){
-                    Analog::log($e->getMessage());
-				} finally {
-					if ($fsm->getCurrentState() == "muted"){
-                        Analog::log("Overriding mute");
-						if ($command == "next"){
-							$this->nextCommand($chat, $args);
-						} else if ($command == "info"){
-							$this->infoCommand($chat);
-						} else if ($command == "curr"){
-							$this->currCommand($chat);
-						}
-					}
-				}
-			}
-		}
-	}
 
 	function updateMatches(){
         Analog::log("Updating matches");
@@ -355,28 +184,25 @@ class SoccerBot
 
 	private function initLog()
 	{
-        Analog::handler (\Analog\Handler\File::init (array_get($this->config, 'log')));
-	}
+        Analog::handler(\Analog\Handler\Multi::init(array(
+            Analog::WARNING => \Analog\Handler\File::init (array_get($this->config, 'log')),
+            Analog::DEBUG   => \Analog\Handler\Stderr::init ()
+        )));
+    }
 
 	private function initTelegramApi()
 	{
 		$this->offset = 0;
-		$this->telegram = new TelegramApi($this->api_config['TELEGRAM_API_TOKEN']);
+		$this->telegram = new TelegramApi(TELEGRAM_BOT_TOKEN);
 	}
 
 	private function initFooballDataApi()
 	{
 		$this->client = new \GuzzleHttp\Client();
-		$this->header = array('headers' => array('X-Auth-Token' => $this->api_config['FOOTBALL_DATA_API_TOKEN']));
-		$response = $this->client->get($this->api_config['FOOTBALL_DATA_ROOT_URL'], $this->header);
+		$this->header = array('headers' => array('X-Auth-Token' => FOOTBALL_DATA_API_TOKEN));
+		$response = $this->client->get(FOOTBALL_DATA_ROOT_URL, $this->header);
 		$this->rootData = json_decode($response->getBody()->getContents(), true);
 	}
-
-	private function initStates()
-	{
-		$this->states = ['private' => [], 'group' => []];
-	}
-
 	private function updateMatch(Match $match){
 		$newData = [];
 		$uri = $match->getUrl();
@@ -494,79 +320,6 @@ class SoccerBot
 		$this->telegram->sendMessage(['chat_id' => $chat->getChatId(), 'text' => $message, 'parse_mode' => 'Markdown']);
 	}
 
-	private function initGroupFSM(FiniteStateMachine $fsm)
-	{
-		$fsm->getDispatcher()->addListener('finite.post_transition.live', [$this, 'groupChatLiveTransition']);
-		$fsm->getDispatcher()->addListener('finite.post_transition.mute', [$this, 'groupChatMuteTransition']);
-		$fsm->getDispatcher()->addListener('finite.post_transition.info', [$this, 'groupChatInfoTransition']);
-		$fsm->getDispatcher()->addListener('finite.post_transition.curr', [$this, 'groupChatCurrTransition']);
-		$fsm->getDispatcher()->addListener('finite.post_transition.next', [$this, 'groupChatNextTransition']);
-	}
-
-	private function initPrivateFSM(FiniteStateMachine $fsm)
-	{
-		$fsm->getDispatcher()->addListener('finite.post_transition.live', [$this, 'groupChatLiveTransition']);
-		$fsm->getDispatcher()->addListener('finite.post_transition.mute', [$this, 'groupChatMuteTransition']);
-		$fsm->getDispatcher()->addListener('finite.post_transition.info', [$this, 'groupChatInfoTransition']);
-		$fsm->getDispatcher()->addListener('finite.post_transition.curr', [$this, 'groupChatCurrTransition']);
-		$fsm->getDispatcher()->addListener('finite.post_transition.next', [$this, 'groupChatNextTransition']);
-	}
-
-	function groupChatLiveTransition(\Finite\Event\TransitionEvent $e){
-		$params = $e->getProperties();
-		$chat   = array_get($params, 'chat');
-		if (is_null($chat)){
-			throw new \Exception("Chat is null");
-		}
-		$this->liveCommand($chat);
-	}
-
-
-	function groupChatMuteTransition(\Finite\Event\TransitionEvent $e){
-		$params = $e->getProperties();
-		$chat   = array_get($params, 'chat');
-		if (is_null($chat)){
-			throw new \Exception("Chat is null");
-		}
-		$this->muteCommand($chat);
-	}
-
-	function groupChatInfoTransition(\Finite\Event\TransitionEvent $e){
-		$params = $e->getProperties();
-		$chat   = array_get($params, 'chat');
-		if (is_null($chat)){
-			throw new \Exception("Chat is null");
-		}
-		$this->infoCommand($chat);
-	}
-
-	function groupChatCurrTransition(\Finite\Event\TransitionEvent $e){
-		$params = $e->getProperties();
-		$chat   = array_get($params, 'chat');
-		if (is_null($chat)){
-			throw new \Exception("Chat is null");
-		}
-		$this->currCommand($chat);
-	}
-
-	function groupChatNextTransition(\Finite\Event\TransitionEvent $e){
-		$params = $e->getProperties();
-		$chat   = array_get($params, 'chat');
-		$args   = array_get($params, 'args');
-		if (is_null($chat)){
-			throw new \Exception("Chat is null");
-		}
-		$this->nextCommand($chat, $args);
-	}
-
-	function privateChatLiveTransition(\Finite\Event\TransitionEvent $e){
-		Analog::log("Executed from privateChatLiveTransition");
-	}
-
-	function privateMuteTransition(\Finite\Event\TransitionEvent $e){
-        Analog::log("Executed from privateMuteTransition");
-	}
-
 	private function liveCommand($chat)
 	{
         $this->sendMessage($this->lang->trans('live.turnedOn'), $chat);
@@ -662,7 +415,5 @@ class SoccerBot
 	private function initConfig()
 	{
 		$this->config = include(__DIR__ . '/../../../res/conf/config.php');
-		$this->api_config = include(__DIR__ . '/../../../res/conf/api_config.php');
-
 	}
 }

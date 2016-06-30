@@ -35,6 +35,7 @@ class ChatFactory
         } catch (\Propel\Runtime\Exception\EntityNotFoundException $e) {}
 
         if (!is_null($chat)) {
+            $chat->restore();
             return $chat;
         }
 
@@ -51,14 +52,15 @@ class ChatFactory
             case "channel":
             default:
                 $chat = new GroupChat();
-                break;
+                $chat->setType('group');
+
+            break;
             case "private":
                 $chat = new PrivateChat();
+                $chat->setType('private');
                 break;
         }
-
         $chat->setChatId($telegramChat->getId());
-        $chat->setType($chatType);
         $chat->setState($chat::$initialState);
         $chat->save();
         return $chat;
