@@ -514,16 +514,11 @@ class SoccerBot
                 }
 
 				if (array_get($newData, 'status') == 'FINISHED'){
-					$message .= $this->lang->trans(
-                        'live.finished',
-                        [
-                            '%homeTeamName%' => $homeTeam->getName(),
-                            '%awayTeamName%' => $awayTeam->getName()
-                        ]
-                    );
                     $message .= $this->lang->trans(
                         'live.finalScore',
                         [
+                            '%homeTeamName%' => $homeTeam->getName(),
+                            '%awayTeamName%' => $awayTeam->getName(),
                             '%homeTeamEmoji%' => $homeTeam->getEmoji(),
                             '%homeTeamGoals%' => $match->getHomeTeamGoals(),
                             '%awayTeamGoals%' => $match->getAwayTeamGoals(),
