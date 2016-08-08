@@ -17,8 +17,4 @@ use Dende\SoccerBot\Helper;
  */
 class Team extends BaseTeam
 {
-	public function getEmoji(){
-		return Helper::codeToEmoji($this->getCode());
-	}
-
 }

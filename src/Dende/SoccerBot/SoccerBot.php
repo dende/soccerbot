@@ -5,6 +5,7 @@ namespace Dende\SoccerBot;
 use Dende\SoccerBot\Exception;
 use Dende\SoccerBot\Model\ChatFactory;
 use Analog\Analog;
+use Dende\SoccerBot\Model\ChatInterface;
 use Telegram\Bot\Api as TelegramApi;
 use Telegram\Bot\Objects\Update as TelegramUpdate;
 use Finite\StateMachine\StateMachine as FiniteStateMachine;
@@ -17,6 +18,7 @@ use Dende\SoccerBot\Model\Match;
 use Dende\SoccerBot\Model\MatchQuery;
 use Dende\SoccerBot\Model\PrivateChat;
 use Dende\SoccerBot\Model\GroupChat;
+use Dende\SoccerBot\Model\Message;
 
 /**
  * Class SoccerBot
@@ -62,9 +64,6 @@ class SoccerBot
                     //not too bad
                 } catch (Exception\InvalidCommandStringException $e){
                     //not too bad
-                } catch (\Exception $e){
-                    \Kint::dump($e);
-
                 }
             }
 		}
@@ -81,7 +80,9 @@ class SoccerBot
 		
 		$chat = ChatFactory::create($message->getChat());
 
-            $chat->handle($update);
+        $message = $chat->handle($update);
+
+        $this->sendMessage($message, $chat);
 
 	}
 
@@ -240,7 +241,7 @@ class SoccerBot
 		foreach ($fsms as $fsm){
 			/** @var FiniteStateMachine $fsm */
 			if ($fsm->getCurrentState() == 'liveticker'){
-				$message = "";
+				$message = new Message();
 
 				$homeTeam = $match->getHomeTeam();
 				$awayTeam = $match->getAwayTeam();
@@ -249,13 +250,11 @@ class SoccerBot
 				$chat = $fsm->getObject();
 
 				if (array_get($newData, 'status') == 'IN_PLAY'){
-					$message .= $this->lang->trans(
+					$message->addLine(
                         'live.matchStarted',
                         [
                             '%homeTeamName%'  => $homeTeam->getName(),
-                            '%homeTeamEmoji%' => $homeTeam->getEmoji(),
                             '%awayTeamName%'  => $awayTeam->getName(),
-                            '%awayTeamEmoji%' => $awayTeam->getEmoji()
                         ]
                     );
 				}
@@ -272,41 +271,37 @@ class SoccerBot
 
                 if (!empty($goalsScored)){
                     /** @noinspection PhpUndefinedVariableInspection */
-                    $message .= $this->lang->transChoice(
+                    $message->addLine(
                         'live.teamScored',
-                        $goalsScored,
                         [
                             '%teamScoredName%'   => $teamScoredName,
                             '%teamConcededName%' => $teamConcededName,
                             '%goals%'            => $goalsScored
-                        ]
+                        ],
+                        $goalsScored
                     );
-                    $message .= $this->lang->trans(
+                    $message->addLine(
                         'live.newScore',
                         [
-                            '%homeTeamEmoji%' => $homeTeam->getEmoji(),
                             '%homeTeamGoals%' => $match->getHomeTeamGoals(),
                             '%awayTeamGoals%' => $match->getAwayTeamGoals(),
-                            '%awayTeamEmoji%' => $awayTeam->getEmoji()
                         ]
                     );
                 }
 
 				if (array_get($newData, 'status') == 'FINISHED'){
-					$message .= $this->lang->trans(
+					$message->addLine(
                         'live.finished',
                         [
                             '%homeTeamName%' => $homeTeam->getName(),
                             '%awayTeamName%' => $awayTeam->getName()
                         ]
                     );
-                    $message .= $this->lang->trans(
+                    $message->addLine(
                         'live.finalScore',
                         [
-                            '%homeTeamEmoji%' => $homeTeam->getEmoji(),
                             '%homeTeamGoals%' => $match->getHomeTeamGoals(),
                             '%awayTeamGoals%' => $match->getAwayTeamGoals(),
-                            '%awayTeamEmoji%' => $awayTeam->getEmoji()
                         ]
                     );
 				}
@@ -315,9 +310,9 @@ class SoccerBot
 		}
 	}
 
-	private function sendMessage($message, $chat){
+	private function sendMessage(Message $message, ChatInterface $chat){
 		/** @var PrivateChat|GroupChat $chat */
-		$this->telegram->sendMessage(['chat_id' => $chat->getChatId(), 'text' => $message, 'parse_mode' => 'Markdown']);
+		$this->telegram->sendMessage(['chat_id' => $chat->getChatId(), 'text' => $message->translate($this->lang), 'parse_mode' => 'Markdown']);
 	}
 
 	private function liveCommand($chat)
@@ -331,13 +326,6 @@ class SoccerBot
 
 	}
 
-	private function infoCommand($chat)
-	/** @var PrivateChat|GroupChat $chat */
-	{
-        $message = $this->lang->trans('command.info', ['%status%' => $this->chatIdToFsm($chat->getChatId())->getCurrentState()]);
-		$this->sendMessage($message, $chat);
-	}
-
 	private function chatIdToFsm($chatId){
 		if (array_has($this->states['private'], $chatId)){
 			return array_get($this->states['private'], $chatId);
@@ -348,62 +336,6 @@ class SoccerBot
 		throw new \Exception("FiniteStateMachine not found");
 	}
 
-	private function currCommand($chat)
-	{
-		$message = "";
-		$currentMatchesCount = MatchQuery::create()->where('matches.status = ?', 'IN_PLAY')->count();
-		if ($currentMatchesCount > 0){
-
-            $message .= $this->lang->transChoice('command.curr.currentMatches', $currentMatchesCount);
-
-			$currentMatches = MatchQuery::create()->where('matches.status = ?', 'IN_PLAY')->find();
-
-			foreach ($currentMatches as $currentMatch){
-                $message .= $this->lang->trans(
-                    'command.curr.currentMatch',
-                    [
-                        '%homeTeamName%'  => $currentMatch->getHomeTeam()->getName(),
-                        '%homeTeamEmoji%' => $currentMatch->getHomeTeam()->getEmoji(),
-                        '%awayTeamEmoji%' => $currentMatch->getAwayTeam()->getEmoji(),
-                        '%awayTeamName%'  => $currentMatch->getAwayTeam()->getName(),
-                        '%homeTeamGoals%' => $currentMatch->getHomeTeamGoals(),
-                        '%awayTeamGoals%' => $currentMatch->getAwayTeamGoals()
-                    ]
-                );
-			}
-		} else {
-			$message .= $this->lang->trans('command.curr.noCurrentMatches');
-		}
-		$this->sendMessage($message, $chat);
-
-	}
-
-	private function nextCommand($chat, $args)
-	{
-		$m = ($args && is_numeric($args[0])) ? $args[0] : 1;
-		$i = 0;
-		$message = $this->lang->transChoice('command.next.nextMatches', $m) . "\n";
-		$nextMatches = MatchQuery::create()->where('matches.status = ?', 'TIMED')->orderByDate()->find();
-		foreach ($nextMatches as $nextMatch){
-			$difference = Helper::timeDifference($nextMatch->getDate());
-			$message .= $this->lang->trans(
-				'command.next.nextMatch',
-				[
-					'%homeTeamName%'  => $nextMatch->getHomeTeam()->getName(),
-					'%homeTeamEmoji%' => $nextMatch->getHomeTeam()->getEmoji(),
-					'%awayTeamEmoji%' => $nextMatch->getAwayTeam()->getEmoji(),
-					'%awayTeamName%'  => $nextMatch->getAwayTeam()->getName(),
-					'%difference%'    => $difference
-				]
-			);
-			$i++;
-			if ($i < $m)
-				$message .= "\n";
-			else
-				break;
-		}
-		$this->sendMessage($message, $chat);
-	}
 
 	private function initTranslation()
 	{

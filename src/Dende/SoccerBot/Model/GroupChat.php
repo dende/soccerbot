@@ -8,6 +8,7 @@ use Dende\SoccerBot\Model\Base\GroupChat as BaseGroupChat;
 use Finite\Loader\ArrayLoader;
 use Finite\StatefulInterface;
 use Monolog\Logger;
+use Symfony\Component\Translation\Translator;
 use Telegram\Bot\Objects\Update as TelegramUpdate;
 use Finite\StateMachine\StateMachine as FiniteStateMachine;
 

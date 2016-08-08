@@ -9,6 +9,7 @@
 namespace Dende\SoccerBot\Model;
 
 use Monolog\Logger;
+use Symfony\Component\Translation\Translator;
 use Telegram\Bot\Objects\Update as TelegramUpdate;
 
 

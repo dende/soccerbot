@@ -4,13 +4,19 @@
 namespace Dende\SoccerBot\Command;
 
 
-use Dende\SoccerBot\Model\ChatInterface;
+use Dende\SoccerBot\Model\Message;
+use Dende\SoccerBot\Model\GroupChat;
+use Dende\SoccerBot\Model\PrivateChat;
+use Finite\State\StateInterface;
 
-class InfoCommand implements CommandInterface
+class InfoCommand extends AbstractCommand
 {
 
-    public static function run(ChatInterface $chat)
-    {
-        // TODO: Implement run() method.
+    protected function runPrivate(PrivateChat $chat, $args, StateInterface $state){
+        return new Message('command.info', ['%status%' => $state->getName()]);
+    }
+
+    protected function runGroup(GroupChat $chat, $args, StateInterface $state){
+
     }
 }

@@ -2,12 +2,13 @@
 
 namespace Dende\SoccerBot\Model;
 
+use Analog\Analog;
 use Dende\SoccerBot\Command\CommandFactory;
+use Dende\SoccerBot\Exception\CommandNotFoundException;
 use Dende\SoccerBot\Exception\EmptyMessageException;
 use Dende\SoccerBot\Model\Base\PrivateChat as BasePrivateChat;
 use Finite\Loader\ArrayLoader;
 use Finite\StatefulInterface;
-use Monolog\Logger;
 use Telegram\Bot\Objects\Update as TelegramUpdate;
 use Finite\StateMachine\StateMachine as FiniteStateMachine;
 /**
@@ -25,9 +26,11 @@ class PrivateChat extends BasePrivateChat implements StatefulInterface, ChatInte
 	public static $initialState = 'muted';
     /** @var  FiniteStateMachine */
     private $fsm;
+
+
     public function init()
     {
-            $this->fsm = new FiniteStateMachine($this);
+        $this->fsm = new FiniteStateMachine($this);
         $arrayLoader = new ArrayLoader([
             'class'  => 'PrivateChat',
             'states' => [
@@ -85,6 +88,7 @@ class PrivateChat extends BasePrivateChat implements StatefulInterface, ChatInte
 
     /**
      * @param TelegramUpdate $update
+     * @return Message|null
      * @throws \Exception
      */
     public function handle(TelegramUpdate $update){
@@ -103,14 +107,26 @@ class PrivateChat extends BasePrivateChat implements StatefulInterface, ChatInte
             $canTransit = false;
         }
 
+        $response = null;
 
         if ($canTransit){
-            $this->fsm->apply(['chat' => $this, 'args' => $args]);
+
+            $response = $this->fsm->apply(['chat' => $this, 'args' => $args]);
+
         } else {
+
             $state = $this->fsm->getCurrentState();
-            $command = CommandFactory::createFromString($commandString);
-            $command->run($this, $args, $state);
+
+            try {
+                $command = CommandFactory::createFromString($commandString);
+                $response = $command->run($this, $args, $state);
+            } catch (CommandNotFoundException $e){
+                Analog::log('cannot transit or execute command ' . $commandString, Analog::WARNING);
+            }
+
         }
+
+        return $response;
     }
 
 }

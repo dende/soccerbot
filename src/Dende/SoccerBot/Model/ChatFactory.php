@@ -62,6 +62,7 @@ class ChatFactory
         }
         $chat->setChatId($telegramChat->getId());
         $chat->setState($chat::$initialState);
+        $chat->init();
         $chat->save();
         return $chat;
     }

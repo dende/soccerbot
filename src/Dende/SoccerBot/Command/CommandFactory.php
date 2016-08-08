@@ -13,10 +13,11 @@ class CommandFactory
 {
     public static function createFromString($commandString){
 
-        if (class_exists(ucfirst($commandString . 'Command'))){
-            return new $commandString();
+        $classname = 'Dende\\SoccerBot\\Command\\'. ucfirst($commandString . 'Command');
+        if (class_exists($classname, true)){
+            return new $classname();
         }
-        Analog::log("Command for $commandString not found", Analog::WARNING);
+        Analog::log("Command $classname not found", Analog::WARNING);
         throw new CommandNotFoundException("CommandNotFound");
     }
 
@@ -32,6 +33,9 @@ class CommandFactory
 
         $commandString = substr($text, array_get($entity, 'offset'), array_get($entity, 'length'));
         $args = explode(' ', substr($text, array_get($entity, 'length')+1));
+        if (count($args) == 1 && empty($args[0])){
+            $args = null;
+        }
         if (substr($commandString,0,1) != '/'){
             throw new InvalidCommandStringException("Wrong kind of command");
         }
