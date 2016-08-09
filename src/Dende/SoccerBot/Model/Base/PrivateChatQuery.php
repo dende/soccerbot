@@ -22,12 +22,12 @@ use Propel\Runtime\Exception\PropelException;
  * @method     ChildPrivateChatQuery orderById($order = Criteria::ASC) Order by the id column
  * @method     ChildPrivateChatQuery orderByChatId($order = Criteria::ASC) Order by the chat_id column
  * @method     ChildPrivateChatQuery orderByType($order = Criteria::ASC) Order by the type column
- * @method     ChildPrivateChatQuery orderByState($order = Criteria::ASC) Order by the state column
+ * @method     ChildPrivateChatQuery orderByLiveticker($order = Criteria::ASC) Order by the liveticker column
  *
  * @method     ChildPrivateChatQuery groupById() Group by the id column
  * @method     ChildPrivateChatQuery groupByChatId() Group by the chat_id column
  * @method     ChildPrivateChatQuery groupByType() Group by the type column
- * @method     ChildPrivateChatQuery groupByState() Group by the state column
+ * @method     ChildPrivateChatQuery groupByLiveticker() Group by the liveticker column
  *
  * @method     ChildPrivateChatQuery leftJoin($relation) Adds a LEFT JOIN clause to the query
  * @method     ChildPrivateChatQuery rightJoin($relation) Adds a RIGHT JOIN clause to the query
@@ -43,7 +43,7 @@ use Propel\Runtime\Exception\PropelException;
  * @method     ChildPrivateChat findOneById(int $id) Return the first ChildPrivateChat filtered by the id column
  * @method     ChildPrivateChat findOneByChatId(int $chat_id) Return the first ChildPrivateChat filtered by the chat_id column
  * @method     ChildPrivateChat findOneByType(string $type) Return the first ChildPrivateChat filtered by the type column
- * @method     ChildPrivateChat findOneByState(string $state) Return the first ChildPrivateChat filtered by the state column *
+ * @method     ChildPrivateChat findOneByLiveticker(boolean $liveticker) Return the first ChildPrivateChat filtered by the liveticker column *
 
  * @method     ChildPrivateChat requirePk($key, ConnectionInterface $con = null) Return the ChildPrivateChat by primary key and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildPrivateChat requireOne(ConnectionInterface $con = null) Return the first ChildPrivateChat matching the query and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
@@ -51,13 +51,13 @@ use Propel\Runtime\Exception\PropelException;
  * @method     ChildPrivateChat requireOneById(int $id) Return the first ChildPrivateChat filtered by the id column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildPrivateChat requireOneByChatId(int $chat_id) Return the first ChildPrivateChat filtered by the chat_id column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildPrivateChat requireOneByType(string $type) Return the first ChildPrivateChat filtered by the type column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
- * @method     ChildPrivateChat requireOneByState(string $state) Return the first ChildPrivateChat filtered by the state column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
+ * @method     ChildPrivateChat requireOneByLiveticker(boolean $liveticker) Return the first ChildPrivateChat filtered by the liveticker column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  *
  * @method     ChildPrivateChat[]|ObjectCollection find(ConnectionInterface $con = null) Return ChildPrivateChat objects based on current ModelCriteria
  * @method     ChildPrivateChat[]|ObjectCollection findById(int $id) Return ChildPrivateChat objects filtered by the id column
  * @method     ChildPrivateChat[]|ObjectCollection findByChatId(int $chat_id) Return ChildPrivateChat objects filtered by the chat_id column
  * @method     ChildPrivateChat[]|ObjectCollection findByType(string $type) Return ChildPrivateChat objects filtered by the type column
- * @method     ChildPrivateChat[]|ObjectCollection findByState(string $state) Return ChildPrivateChat objects filtered by the state column
+ * @method     ChildPrivateChat[]|ObjectCollection findByLiveticker(boolean $liveticker) Return ChildPrivateChat objects filtered by the liveticker column
  * @method     ChildPrivateChat[]|\Propel\Runtime\Util\PropelModelPager paginate($page = 1, $maxPerPage = 10, ConnectionInterface $con = null) Issue a SELECT query based on the current ModelCriteria and uses a page and a maximum number of results per page to compute an offset and a limit
  *
  */
@@ -156,7 +156,7 @@ abstract class PrivateChatQuery extends ModelCriteria
      */
     protected function findPkSimple($key, ConnectionInterface $con)
     {
-        $sql = 'SELECT id, chat_id, type, state FROM privatechats WHERE id = :p0';
+        $sql = 'SELECT id, chat_id, type, liveticker FROM privatechats WHERE id = :p0';
         try {
             $stmt = $con->prepare($sql);
             $stmt->bindValue(':p0', $key, PDO::PARAM_INT);
@@ -355,29 +355,30 @@ abstract class PrivateChatQuery extends ModelCriteria
     }
 
     /**
-     * Filter the query on the state column
+     * Filter the query on the liveticker column
      *
      * Example usage:
      * <code>
-     * $query->filterByState('fooValue');   // WHERE state = 'fooValue'
-     * $query->filterByState('%fooValue%'); // WHERE state LIKE '%fooValue%'
+     * $query->filterByLiveticker(true); // WHERE liveticker = true
+     * $query->filterByLiveticker('yes'); // WHERE liveticker = true
      * </code>
      *
-     * @param     string $state The value to use as filter.
-     *              Accepts wildcards (* and % trigger a LIKE)
+     * @param     boolean|string $liveticker The value to use as filter.
+     *              Non-boolean arguments are converted using the following rules:
+     *                * 1, '1', 'true',  'on',  and 'yes' are converted to boolean true
+     *                * 0, '0', 'false', 'off', and 'no'  are converted to boolean false
+     *              Check on string values is case insensitive (so 'FaLsE' is seen as 'false').
      * @param     string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
      *
      * @return $this|ChildPrivateChatQuery The current query, for fluid interface
      */
-    public function filterByState($state = null, $comparison = null)
+    public function filterByLiveticker($liveticker = null, $comparison = null)
     {
-        if (null === $comparison) {
-            if (is_array($state)) {
-                $comparison = Criteria::IN;
-            }
+        if (is_string($liveticker)) {
+            $liveticker = in_array(strtolower($liveticker), array('false', 'off', '-', 'no', 'n', '0', '')) ? false : true;
         }
 
-        return $this->addUsingAlias(PrivateChatTableMap::COL_STATE, $state, $comparison);
+        return $this->addUsingAlias(PrivateChatTableMap::COL_LIVETICKER, $liveticker, $comparison);
     }
 
     /**

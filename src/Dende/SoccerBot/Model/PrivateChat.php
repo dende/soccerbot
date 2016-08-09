@@ -18,9 +18,9 @@ use Finite\StateMachine\StateMachine as FiniteStateMachine;
  */
 class PrivateChat extends BasePrivateChat implements StatefulInterface, ChatInterface
 {
-	public static $initialState = 'muted';
     /** @var  FiniteStateMachine */
     private $fsm;
+    protected $state;
 
     public function init()
     {
@@ -52,8 +52,6 @@ class PrivateChat extends BasePrivateChat implements StatefulInterface, ChatInte
         ]);
         $arrayLoader->load($this->fsm);
         $this->fsm->initialize();
-        $this->fsm->getDispatcher()->addListener('finite.post_transition.live', [$this, 'liveTransition']);
-        $this->fsm->getDispatcher()->addListener('finite.post_transition.mute', [$this, 'muteTransition']);
     }
     
     public function restore(){
@@ -79,5 +77,10 @@ class PrivateChat extends BasePrivateChat implements StatefulInterface, ChatInte
 	{
 		$this->state = $state;
 	}
+
+    public function getFSM()
+    {
+        return $this->fsm;
+    }
 
 }

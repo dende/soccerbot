@@ -35,7 +35,7 @@
         <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true" />
         <column name="chat_id" type="integer" required="true"/>
         <column name="type" type="varchar" size="20" required="true" />
-        <column name="state" type="varchar" size="50" required="true" />
+        <column name="liveticker" type="boolean" required="false" defaultValue="false"/>
         <unique>
             <unique-column name="chat_id"/>
         </unique>
@@ -45,7 +45,7 @@
         <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true" />
         <column name="chat_id" type="integer" required="true"/>
         <column name="type" type="varchar" size="20" required="true" />
-        <column name="state" type="varchar" size="50" required="true" />
+        <column name="liveticker" type="boolean" required="false" defaultValue="false"/>
         <unique>
             <unique-column name="chat_id"/>
         </unique>

@@ -2,14 +2,22 @@
 
 return [
 	'live' => [
-        'turnedOn'     => 'Liveticker eingeschaltet.',
-        'turnedOff'    => 'Ich sage jetzt gar nix mehr.',
 		'matchStarted' => 'Das Spiel *%homeTeamName%* gegen *%awayTeamName%* hat begonnen.',
 		'teamScored'   => '*%homeTeamName%* hat ein Tor gegen *%awayTeamName%* erzielt.|*%homeTeamName%* hat %goals% Tore gegen *%awayTeamName%* erzielt.',
         'newScore'     => 'Es steht nun *%homeTeamGoals% - %awayTeamGoals%.',
         'finished'     => 'Der Endstand lautet *%homeTeamGoals% - %awayTeamGoals%*'
     ],
     'command' => [
+        'live' => [
+            'turnedOn'     => 'Liveticker eingeschaltet.',
+            'alreadyOn'    => 'Liveticker ist bereits eingeschaltet',
+            'cantTurnOn'   => 'Kann den Liveticker nicht einschalten',
+        ],
+        'mute' => [
+            'turnedOn'     => 'Liveticker ausgeschaltet.',
+            'alreadyOn'    => 'Liveticker ist bereits ausgeschaltet',
+            'cantTurnOn'   => 'Kann den Liveticker ausgeschaltet',
+        ],
         'noop' => 'Unbekannter Befehl "%command%"',
         'info' => 'Aktueller Status ist %status%.',
         'curr' =>[

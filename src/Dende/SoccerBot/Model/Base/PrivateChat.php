@@ -81,11 +81,12 @@ abstract class PrivateChat implements ActiveRecordInterface
     protected $type;
 
     /**
-     * The value for the state field.
+     * The value for the liveticker field.
      *
-     * @var        string
+     * Note: this column has a database default value of: false
+     * @var        boolean
      */
-    protected $state;
+    protected $liveticker;
 
     /**
      * Flag to prevent endless save loop, if this object is referenced
@@ -96,10 +97,23 @@ abstract class PrivateChat implements ActiveRecordInterface
     protected $alreadyInSave = false;
 
     /**
+     * Applies default values to this object.
+     * This method should be called from the object's constructor (or
+     * equivalent initialization method).
+     * @see __construct()
+     */
+    public function applyDefaultValues()
+    {
+        $this->liveticker = false;
+    }
+
+    /**
      * Initializes internal state of Dende\SoccerBot\Model\Base\PrivateChat object.
+     * @see applyDefaults()
      */
     public function __construct()
     {
+        $this->applyDefaultValues();
     }
 
     /**
@@ -351,13 +365,23 @@ abstract class PrivateChat implements ActiveRecordInterface
     }
 
     /**
-     * Get the [state] column value.
+     * Get the [liveticker] column value.
      *
-     * @return string
+     * @return boolean
      */
-    public function getState()
+    public function getLiveticker()
     {
-        return $this->state;
+        return $this->liveticker;
+    }
+
+    /**
+     * Get the [liveticker] column value.
+     *
+     * @return boolean
+     */
+    public function isLiveticker()
+    {
+        return $this->getLiveticker();
     }
 
     /**
@@ -421,24 +445,32 @@ abstract class PrivateChat implements ActiveRecordInterface
     } // setType()
 
     /**
-     * Set the value of [state] column.
+     * Sets the value of the [liveticker] column.
+     * Non-boolean arguments are converted using the following rules:
+     *   * 1, '1', 'true',  'on',  and 'yes' are converted to boolean true
+     *   * 0, '0', 'false', 'off', and 'no'  are converted to boolean false
+     * Check on string values is case insensitive (so 'FaLsE' is seen as 'false').
      *
-     * @param string $v new value
+     * @param  boolean|integer|string $v The new value
      * @return $this|\Dende\SoccerBot\Model\PrivateChat The current object (for fluent API support)
      */
-    public function setState($v)
+    public function setLiveticker($v)
     {
         if ($v !== null) {
-            $v = (string) $v;
+            if (is_string($v)) {
+                $v = in_array(strtolower($v), array('false', 'off', '-', 'no', 'n', '0', '')) ? false : true;
+            } else {
+                $v = (boolean) $v;
+            }
         }
 
-        if ($this->state !== $v) {
-            $this->state = $v;
-            $this->modifiedColumns[PrivateChatTableMap::COL_STATE] = true;
+        if ($this->liveticker !== $v) {
+            $this->liveticker = $v;
+            $this->modifiedColumns[PrivateChatTableMap::COL_LIVETICKER] = true;
         }
 
         return $this;
-    } // setState()
+    } // setLiveticker()
 
     /**
      * Indicates whether the columns in this object are only set to default values.
@@ -450,6 +482,10 @@ abstract class PrivateChat implements ActiveRecordInterface
      */
     public function hasOnlyDefaultValues()
     {
+            if ($this->liveticker !== false) {
+                return false;
+            }
+
         // otherwise, everything was equal, so return TRUE
         return true;
     } // hasOnlyDefaultValues()
@@ -485,8 +521,8 @@ abstract class PrivateChat implements ActiveRecordInterface
             $col = $row[TableMap::TYPE_NUM == $indexType ? 2 + $startcol : PrivateChatTableMap::translateFieldName('Type', TableMap::TYPE_PHPNAME, $indexType)];
             $this->type = (null !== $col) ? (string) $col : null;
 
-            $col = $row[TableMap::TYPE_NUM == $indexType ? 3 + $startcol : PrivateChatTableMap::translateFieldName('State', TableMap::TYPE_PHPNAME, $indexType)];
-            $this->state = (null !== $col) ? (string) $col : null;
+            $col = $row[TableMap::TYPE_NUM == $indexType ? 3 + $startcol : PrivateChatTableMap::translateFieldName('Liveticker', TableMap::TYPE_PHPNAME, $indexType)];
+            $this->liveticker = (null !== $col) ? (boolean) $col : null;
             $this->resetModified();
 
             $this->setNew(false);
@@ -701,8 +737,8 @@ abstract class PrivateChat implements ActiveRecordInterface
         if ($this->isColumnModified(PrivateChatTableMap::COL_TYPE)) {
             $modifiedColumns[':p' . $index++]  = 'type';
         }
-        if ($this->isColumnModified(PrivateChatTableMap::COL_STATE)) {
-            $modifiedColumns[':p' . $index++]  = 'state';
+        if ($this->isColumnModified(PrivateChatTableMap::COL_LIVETICKER)) {
+            $modifiedColumns[':p' . $index++]  = 'liveticker';
         }
 
         $sql = sprintf(
@@ -724,8 +760,8 @@ abstract class PrivateChat implements ActiveRecordInterface
                     case 'type':
                         $stmt->bindValue($identifier, $this->type, PDO::PARAM_STR);
                         break;
-                    case 'state':
-                        $stmt->bindValue($identifier, $this->state, PDO::PARAM_STR);
+                    case 'liveticker':
+                        $stmt->bindValue($identifier, (int) $this->liveticker, PDO::PARAM_INT);
                         break;
                 }
             }
@@ -799,7 +835,7 @@ abstract class PrivateChat implements ActiveRecordInterface
                 return $this->getType();
                 break;
             case 3:
-                return $this->getState();
+                return $this->getLiveticker();
                 break;
             default:
                 return null;
@@ -833,7 +869,7 @@ abstract class PrivateChat implements ActiveRecordInterface
             $keys[0] => $this->getId(),
             $keys[1] => $this->getChatId(),
             $keys[2] => $this->getType(),
-            $keys[3] => $this->getState(),
+            $keys[3] => $this->getLiveticker(),
         );
         $virtualColumns = $this->virtualColumns;
         foreach ($virtualColumns as $key => $virtualColumn) {
@@ -883,7 +919,7 @@ abstract class PrivateChat implements ActiveRecordInterface
                 $this->setType($value);
                 break;
             case 3:
-                $this->setState($value);
+                $this->setLiveticker($value);
                 break;
         } // switch()
 
@@ -921,7 +957,7 @@ abstract class PrivateChat implements ActiveRecordInterface
             $this->setType($arr[$keys[2]]);
         }
         if (array_key_exists($keys[3], $arr)) {
-            $this->setState($arr[$keys[3]]);
+            $this->setLiveticker($arr[$keys[3]]);
         }
     }
 
@@ -973,8 +1009,8 @@ abstract class PrivateChat implements ActiveRecordInterface
         if ($this->isColumnModified(PrivateChatTableMap::COL_TYPE)) {
             $criteria->add(PrivateChatTableMap::COL_TYPE, $this->type);
         }
-        if ($this->isColumnModified(PrivateChatTableMap::COL_STATE)) {
-            $criteria->add(PrivateChatTableMap::COL_STATE, $this->state);
+        if ($this->isColumnModified(PrivateChatTableMap::COL_LIVETICKER)) {
+            $criteria->add(PrivateChatTableMap::COL_LIVETICKER, $this->liveticker);
         }
 
         return $criteria;
@@ -1064,7 +1100,7 @@ abstract class PrivateChat implements ActiveRecordInterface
     {
         $copyObj->setChatId($this->getChatId());
         $copyObj->setType($this->getType());
-        $copyObj->setState($this->getState());
+        $copyObj->setLiveticker($this->getLiveticker());
         if ($makeNew) {
             $copyObj->setNew(true);
             $copyObj->setId(NULL); // this is a auto-increment column, so set to default value
@@ -1103,9 +1139,10 @@ abstract class PrivateChat implements ActiveRecordInterface
         $this->id = null;
         $this->chat_id = null;
         $this->type = null;
-        $this->state = null;
+        $this->liveticker = null;
         $this->alreadyInSave = false;
         $this->clearAllReferences();
+        $this->applyDefaultValues();
         $this->resetModified();
         $this->setNew(true);
         $this->setDeleted(false);

@@ -20,13 +20,9 @@ use Finite\StateMachine\StateMachine as FiniteStateMachine;
  */
 class GroupChat extends BaseGroupChat implements StatefulInterface, ChatInterface
 {
-	public static $initialState = 'muted';
     /** @var  FiniteStateMachine */
     private $fsm;
-
-    public function __construct()
-    {
-    }
+    protected $state;
 
     public function init()
     {
@@ -58,8 +54,6 @@ class GroupChat extends BaseGroupChat implements StatefulInterface, ChatInterfac
         ]);
         $arrayLoader->load($this->fsm);
         $this->fsm->initialize();
-        $this->fsm->getDispatcher()->addListener('finite.post_transition.live', [$this, 'liveTransition']);
-        $this->fsm->getDispatcher()->addListener('finite.post_transition.mute', [$this, 'muteTransition']);
     }
 
     public function restore(){
@@ -103,4 +97,8 @@ class GroupChat extends BaseGroupChat implements StatefulInterface, ChatInterfac
         }
     }
 
+    public function getFSM()
+    {
+        return $this->fsm;
+    }
 }

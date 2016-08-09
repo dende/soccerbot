@@ -22,12 +22,12 @@ use Propel\Runtime\Exception\PropelException;
  * @method     ChildGroupChatQuery orderById($order = Criteria::ASC) Order by the id column
  * @method     ChildGroupChatQuery orderByChatId($order = Criteria::ASC) Order by the chat_id column
  * @method     ChildGroupChatQuery orderByType($order = Criteria::ASC) Order by the type column
- * @method     ChildGroupChatQuery orderByState($order = Criteria::ASC) Order by the state column
+ * @method     ChildGroupChatQuery orderByLiveticker($order = Criteria::ASC) Order by the liveticker column
  *
  * @method     ChildGroupChatQuery groupById() Group by the id column
  * @method     ChildGroupChatQuery groupByChatId() Group by the chat_id column
  * @method     ChildGroupChatQuery groupByType() Group by the type column
- * @method     ChildGroupChatQuery groupByState() Group by the state column
+ * @method     ChildGroupChatQuery groupByLiveticker() Group by the liveticker column
  *
  * @method     ChildGroupChatQuery leftJoin($relation) Adds a LEFT JOIN clause to the query
  * @method     ChildGroupChatQuery rightJoin($relation) Adds a RIGHT JOIN clause to the query
@@ -43,7 +43,7 @@ use Propel\Runtime\Exception\PropelException;
  * @method     ChildGroupChat findOneById(int $id) Return the first ChildGroupChat filtered by the id column
  * @method     ChildGroupChat findOneByChatId(int $chat_id) Return the first ChildGroupChat filtered by the chat_id column
  * @method     ChildGroupChat findOneByType(string $type) Return the first ChildGroupChat filtered by the type column
- * @method     ChildGroupChat findOneByState(string $state) Return the first ChildGroupChat filtered by the state column *
+ * @method     ChildGroupChat findOneByLiveticker(boolean $liveticker) Return the first ChildGroupChat filtered by the liveticker column *
 
  * @method     ChildGroupChat requirePk($key, ConnectionInterface $con = null) Return the ChildGroupChat by primary key and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildGroupChat requireOne(ConnectionInterface $con = null) Return the first ChildGroupChat matching the query and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
@@ -51,13 +51,13 @@ use Propel\Runtime\Exception\PropelException;
  * @method     ChildGroupChat requireOneById(int $id) Return the first ChildGroupChat filtered by the id column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildGroupChat requireOneByChatId(int $chat_id) Return the first ChildGroupChat filtered by the chat_id column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  * @method     ChildGroupChat requireOneByType(string $type) Return the first ChildGroupChat filtered by the type column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
- * @method     ChildGroupChat requireOneByState(string $state) Return the first ChildGroupChat filtered by the state column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
+ * @method     ChildGroupChat requireOneByLiveticker(boolean $liveticker) Return the first ChildGroupChat filtered by the liveticker column and throws \Propel\Runtime\Exception\EntityNotFoundException when not found
  *
  * @method     ChildGroupChat[]|ObjectCollection find(ConnectionInterface $con = null) Return ChildGroupChat objects based on current ModelCriteria
  * @method     ChildGroupChat[]|ObjectCollection findById(int $id) Return ChildGroupChat objects filtered by the id column
  * @method     ChildGroupChat[]|ObjectCollection findByChatId(int $chat_id) Return ChildGroupChat objects filtered by the chat_id column
  * @method     ChildGroupChat[]|ObjectCollection findByType(string $type) Return ChildGroupChat objects filtered by the type column
- * @method     ChildGroupChat[]|ObjectCollection findByState(string $state) Return ChildGroupChat objects filtered by the state column
+ * @method     ChildGroupChat[]|ObjectCollection findByLiveticker(boolean $liveticker) Return ChildGroupChat objects filtered by the liveticker column
  * @method     ChildGroupChat[]|\Propel\Runtime\Util\PropelModelPager paginate($page = 1, $maxPerPage = 10, ConnectionInterface $con = null) Issue a SELECT query based on the current ModelCriteria and uses a page and a maximum number of results per page to compute an offset and a limit
  *
  */
@@ -156,7 +156,7 @@ abstract class GroupChatQuery extends ModelCriteria
      */
     protected function findPkSimple($key, ConnectionInterface $con)
     {
-        $sql = 'SELECT id, chat_id, type, state FROM groupchats WHERE id = :p0';
+        $sql = 'SELECT id, chat_id, type, liveticker FROM groupchats WHERE id = :p0';
         try {
             $stmt = $con->prepare($sql);
             $stmt->bindValue(':p0', $key, PDO::PARAM_INT);
@@ -355,29 +355,30 @@ abstract class GroupChatQuery extends ModelCriteria
     }
 
     /**
-     * Filter the query on the state column
+     * Filter the query on the liveticker column
      *
      * Example usage:
      * <code>
-     * $query->filterByState('fooValue');   // WHERE state = 'fooValue'
-     * $query->filterByState('%fooValue%'); // WHERE state LIKE '%fooValue%'
+     * $query->filterByLiveticker(true); // WHERE liveticker = true
+     * $query->filterByLiveticker('yes'); // WHERE liveticker = true
      * </code>
      *
-     * @param     string $state The value to use as filter.
-     *              Accepts wildcards (* and % trigger a LIKE)
+     * @param     boolean|string $liveticker The value to use as filter.
+     *              Non-boolean arguments are converted using the following rules:
+     *                * 1, '1', 'true',  'on',  and 'yes' are converted to boolean true
+     *                * 0, '0', 'false', 'off', and 'no'  are converted to boolean false
+     *              Check on string values is case insensitive (so 'FaLsE' is seen as 'false').
      * @param     string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
      *
      * @return $this|ChildGroupChatQuery The current query, for fluid interface
      */
-    public function filterByState($state = null, $comparison = null)
+    public function filterByLiveticker($liveticker = null, $comparison = null)
     {
-        if (null === $comparison) {
-            if (is_array($state)) {
-                $comparison = Criteria::IN;
-            }
+        if (is_string($liveticker)) {
+            $liveticker = in_array(strtolower($liveticker), array('false', 'off', '-', 'no', 'n', '0', '')) ? false : true;
         }
 
-        return $this->addUsingAlias(GroupChatTableMap::COL_STATE, $state, $comparison);
+        return $this->addUsingAlias(GroupChatTableMap::COL_LIVETICKER, $liveticker, $comparison);
     }
 
     /**

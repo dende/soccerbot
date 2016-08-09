@@ -5,18 +5,26 @@ namespace Dende\SoccerBot\Command;
 
 use Dende\SoccerBot\Exception\CommandNotFoundException;
 use Dende\SoccerBot\Exception\InvalidCommandStringException;
+use Dende\SoccerBot\Repository\ChatRepository;
 use \Telegram\Bot\Objects\Message as TelegramMessage;
 use \Analog\Analog;
 
 
 class CommandFactory
 {
-    public static function createFromString($commandString, $args){
+
+    public function __construct(ChatRepository $chatRepo)
+    {
+        $this->chatRepo = $chatRepo;
+    }
+
+    public function createFromString($commandString, $args){
 
         $classname = 'Dende\\SoccerBot\\Command\\'. ucfirst($commandString . 'Command');
         if (class_exists($classname, true)){
             /** @var AbstractCommand $instance */
-            $instance = new $classname($args);
+            $instance = new $classname($this->chatRepo);
+            $instance->setArgs($args);
         } else {
             Analog::log("Command $classname not found", Analog::WARNING);
             $instance = new NoopCommand($commandString);
@@ -26,7 +34,7 @@ class CommandFactory
         //throw new CommandNotFoundException("CommandNotFound");
     }
 
-    public static function commandStringFromMessage(TelegramMessage $message)
+    public function commandStringFromMessage(TelegramMessage $message)
     {
         $entity = array_get($message->getRawResponse(), 'entities.0');
 
@@ -60,10 +68,10 @@ class CommandFactory
         return [$commandString, $args];
     }
 
-    public static function createFromMessage(TelegramMessage $message)
+    public function createFromMessage(TelegramMessage $message)
     {
-        list($commandString, $args) = CommandFactory::commandStringFromMessage($message);
-        return CommandFactory::createFromString($commandString, $args);
+        list($commandString, $args) = $this->commandStringFromMessage($message);
+        return $this->createFromString($commandString, $args);
 
     }
 }

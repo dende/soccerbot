@@ -12,15 +12,17 @@ namespace Dende\SoccerBot\Command;
 use Dende\SoccerBot\Model\ChatInterface;
 use Dende\SoccerBot\Model\GroupChat;
 use Dende\SoccerBot\Model\PrivateChat;
+use Dende\SoccerBot\Repository\ChatRepository;
 use Finite\State\StateInterface;
 
 abstract class AbstractCommand
 {
     protected $args;
+    protected $chatRepo;
 
-    public function __construct($args)
+    public function __construct(ChatRepository $chatRepo)
     {
-        $this->setArgs($args);
+        $this->chatRepo = $chatRepo;
     }
 
     public function run(ChatInterface $chat){

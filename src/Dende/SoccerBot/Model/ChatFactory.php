@@ -61,7 +61,7 @@ class ChatFactory
                 break;
         }
         $chat->setChatId($telegramChat->getId());
-        $chat->setState($chat::$initialState);
+        $chat->setLiveticker(false);
         $chat->init();
         $chat->save();
         return $chat;

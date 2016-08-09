@@ -9,7 +9,7 @@ use Dende\SoccerBot\Model\GroupChat;
 use Dende\SoccerBot\Model\Message;
 use Dende\SoccerBot\Model\PrivateChat;
 
-class LiveCommand extends AbstractCommand
+class MuteCommand extends AbstractCommand
 {
 
     protected function runPrivate(PrivateChat $chat)
@@ -25,20 +25,20 @@ class LiveCommand extends AbstractCommand
     private function runBoth(ChatInterface $chat){
         $fsm = $chat->getFSM();
         try{
-            $canTransit = $fsm->can('live');
+            $canTransit = $fsm->can('mute');
         } catch (\Finite\Exception\TransitionException $e){
             $canTransit = false;
         }
 
         if ($canTransit){
-            $fsm->apply('live', ['chat' => $chat, 'args' => $this->getArgs()]);
-            $this->chatRepo->live($chat);
-            $response = new Message('command.live.turnedOn');
+            $fsm->apply('mute', ['chat' => $chat, 'args' => $this->getArgs()]);
+            $this->chatRepo->mute($chat);
+            $response = new Message('command.mute.turnedOn');
         } else {
-            if ($fsm->getCurrentState() == "liveticker"){
-                $response = new Message('command.live.alreadyOn');
+            if ($fsm->getCurrentState() == "muted"){
+                $response = new Message('command.mute.alreadyOn');
             } else {
-                $response = new Message('command.live.cantTurnOn');
+                $response = new Message('command.mute.cantTurnOn');
             }
 
         }

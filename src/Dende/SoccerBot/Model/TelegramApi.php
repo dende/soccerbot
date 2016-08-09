@@ -5,19 +5,24 @@ namespace Dende\SoccerBot\Model;
 
 
 use Dende\SoccerBot\Command\CommandFactory;
+use Dende\SoccerBot\Repository\ChatRepository;
 use Symfony\Component\Translation\Translator;
 use Telegram\Bot\Api;
 
 class TelegramApi
 {
+    /** @var Api  */
     private $telegram;
     private $offset;
+    /** @var CommandFactory */
+    private $commandFactory;
 
-    public function __construct(Translator $lang)
+    public function __construct(Translator $lang, CommandFactory $commandFactory)
     {
+        $this->lang = $lang;
+        $this->commandFactory = $commandFactory;
         $this->offset = 0;
         $this->telegram = new Api(TELEGRAM_BOT_TOKEN);
-        $this->lang = $lang;
     }
 
     public function sendMessage($message, ChatInterface $chat){
@@ -47,7 +52,7 @@ class TelegramApi
                 $chat = ChatFactory::create($message->getChat());
 
 
-                $command = CommandFactory::createFromMessage($message);
+                $command = $this->commandFactory->createFromMessage($message);
                 $response = $command->run($chat);
 
                 $this->sendMessage($response, $chat);
@@ -61,6 +66,80 @@ class TelegramApi
             }
         }
 
+    }
+
+    public function liveticker(Match $match, $info) {
+
+        foreach ($fsms as $fsm){
+            /** @var \Finite\StateMachine\StateMachine $fsm */
+            if ($fsm->getCurrentState() == 'liveticker'){
+                $message = new Message();
+
+                $homeTeam = $match->getHomeTeam();
+                $awayTeam = $match->getAwayTeam();
+
+                /** @var GroupChat $chat */
+                $chat = $fsm->getObject();
+
+                if (array_get($info, 'status') == 'IN_PLAY'){
+                    $message->addLine(
+                        'live.matchStarted',
+                        [
+                            '%homeTeamName%'  => $homeTeam->getName(),
+                            '%awayTeamName%'  => $awayTeam->getName(),
+                        ]
+                    );
+                }
+
+                if (array_has($info, 'homeTeamGoalsScored')){
+                    $goalsScored         = array_get($info, 'homeTeamGoalsScored');
+                    $teamScoredName      = $homeTeam->getName();
+                    $teamConcededName    = $awayTeam->getName();
+                } else if (array_has($info, 'awayTeamGoalsScored')){
+                    $goalsScored         = array_get($info, 'awayTeamGoalsScored');
+                    $teamScoredName      = $awayTeam->getName();
+                    $teamConcededName    = $homeTeam->getName();
+                }
+
+                if (!empty($goalsScored)){
+                    /** @noinspection PhpUndefinedVariableInspection */
+                    $message->addLine(
+                        'live.teamScored',
+                        [
+                            '%teamScoredName%'   => $teamScoredName,
+                            '%teamConcededName%' => $teamConcededName,
+                            '%goals%'            => $goalsScored
+                        ],
+                        $goalsScored
+                    );
+                    $message->addLine(
+                        'live.newScore',
+                        [
+                            '%homeTeamGoals%' => $match->getHomeTeamGoals(),
+                            '%awayTeamGoals%' => $match->getAwayTeamGoals(),
+                        ]
+                    );
+                }
+
+                if (array_get($info, 'status') == 'FINISHED'){
+                    $message->addLine(
+                        'live.finished',
+                        [
+                            '%homeTeamName%' => $homeTeam->getName(),
+                            '%awayTeamName%' => $awayTeam->getName()
+                        ]
+                    );
+                    $message->addLine(
+                        'live.finalScore',
+                        [
+                            '%homeTeamGoals%' => $match->getHomeTeamGoals(),
+                            '%awayTeamGoals%' => $match->getAwayTeamGoals(),
+                        ]
+                    );
+                }
+                $this->sendMessage($message, $chat);
+            }
+        }
     }
 
 }

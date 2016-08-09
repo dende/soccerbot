@@ -15,11 +15,11 @@ class InfoCommand extends AbstractCommand
 {
 
     protected function runPrivate(PrivateChat $chat){
-        $this->runBoth($chat);
+        return $this->runBoth($chat);
     }
 
     protected function runGroup(GroupChat $chat){
-        $this->runBoth($chat);
+        return $this->runBoth($chat);
     }
 
     protected function runBoth(StatefulInterface $chat){

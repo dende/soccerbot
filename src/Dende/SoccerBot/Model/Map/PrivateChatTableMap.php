@@ -87,9 +87,9 @@ class PrivateChatTableMap extends TableMap
     const COL_TYPE = 'privatechats.type';
 
     /**
-     * the column name for the state field
+     * the column name for the liveticker field
      */
-    const COL_STATE = 'privatechats.state';
+    const COL_LIVETICKER = 'privatechats.liveticker';
 
     /**
      * The default string format for model objects of the related table
@@ -103,10 +103,10 @@ class PrivateChatTableMap extends TableMap
      * e.g. self::$fieldNames[self::TYPE_PHPNAME][0] = 'Id'
      */
     protected static $fieldNames = array (
-        self::TYPE_PHPNAME       => array('Id', 'ChatId', 'Type', 'State', ),
-        self::TYPE_CAMELNAME     => array('id', 'chatId', 'type', 'state', ),
-        self::TYPE_COLNAME       => array(PrivateChatTableMap::COL_ID, PrivateChatTableMap::COL_CHAT_ID, PrivateChatTableMap::COL_TYPE, PrivateChatTableMap::COL_STATE, ),
-        self::TYPE_FIELDNAME     => array('id', 'chat_id', 'type', 'state', ),
+        self::TYPE_PHPNAME       => array('Id', 'ChatId', 'Type', 'Liveticker', ),
+        self::TYPE_CAMELNAME     => array('id', 'chatId', 'type', 'liveticker', ),
+        self::TYPE_COLNAME       => array(PrivateChatTableMap::COL_ID, PrivateChatTableMap::COL_CHAT_ID, PrivateChatTableMap::COL_TYPE, PrivateChatTableMap::COL_LIVETICKER, ),
+        self::TYPE_FIELDNAME     => array('id', 'chat_id', 'type', 'liveticker', ),
         self::TYPE_NUM           => array(0, 1, 2, 3, )
     );
 
@@ -117,10 +117,10 @@ class PrivateChatTableMap extends TableMap
      * e.g. self::$fieldKeys[self::TYPE_PHPNAME]['Id'] = 0
      */
     protected static $fieldKeys = array (
-        self::TYPE_PHPNAME       => array('Id' => 0, 'ChatId' => 1, 'Type' => 2, 'State' => 3, ),
-        self::TYPE_CAMELNAME     => array('id' => 0, 'chatId' => 1, 'type' => 2, 'state' => 3, ),
-        self::TYPE_COLNAME       => array(PrivateChatTableMap::COL_ID => 0, PrivateChatTableMap::COL_CHAT_ID => 1, PrivateChatTableMap::COL_TYPE => 2, PrivateChatTableMap::COL_STATE => 3, ),
-        self::TYPE_FIELDNAME     => array('id' => 0, 'chat_id' => 1, 'type' => 2, 'state' => 3, ),
+        self::TYPE_PHPNAME       => array('Id' => 0, 'ChatId' => 1, 'Type' => 2, 'Liveticker' => 3, ),
+        self::TYPE_CAMELNAME     => array('id' => 0, 'chatId' => 1, 'type' => 2, 'liveticker' => 3, ),
+        self::TYPE_COLNAME       => array(PrivateChatTableMap::COL_ID => 0, PrivateChatTableMap::COL_CHAT_ID => 1, PrivateChatTableMap::COL_TYPE => 2, PrivateChatTableMap::COL_LIVETICKER => 3, ),
+        self::TYPE_FIELDNAME     => array('id' => 0, 'chat_id' => 1, 'type' => 2, 'liveticker' => 3, ),
         self::TYPE_NUM           => array(0, 1, 2, 3, )
     );
 
@@ -144,7 +144,7 @@ class PrivateChatTableMap extends TableMap
         $this->addPrimaryKey('id', 'Id', 'INTEGER', true, null, null);
         $this->addColumn('chat_id', 'ChatId', 'INTEGER', true, null, null);
         $this->addColumn('type', 'Type', 'VARCHAR', true, 20, null);
-        $this->addColumn('state', 'State', 'VARCHAR', true, 50, null);
+        $this->addColumn('liveticker', 'Liveticker', 'BOOLEAN', false, 1, false);
     } // initialize()
 
     /**
@@ -298,12 +298,12 @@ class PrivateChatTableMap extends TableMap
             $criteria->addSelectColumn(PrivateChatTableMap::COL_ID);
             $criteria->addSelectColumn(PrivateChatTableMap::COL_CHAT_ID);
             $criteria->addSelectColumn(PrivateChatTableMap::COL_TYPE);
-            $criteria->addSelectColumn(PrivateChatTableMap::COL_STATE);
+            $criteria->addSelectColumn(PrivateChatTableMap::COL_LIVETICKER);
         } else {
             $criteria->addSelectColumn($alias . '.id');
             $criteria->addSelectColumn($alias . '.chat_id');
             $criteria->addSelectColumn($alias . '.type');
-            $criteria->addSelectColumn($alias . '.state');
+            $criteria->addSelectColumn($alias . '.liveticker');
         }
     }
 

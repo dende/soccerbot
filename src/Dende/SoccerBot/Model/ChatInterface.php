@@ -8,9 +8,7 @@
 
 namespace Dende\SoccerBot\Model;
 
-use Monolog\Logger;
-use Symfony\Component\Translation\Translator;
-use Telegram\Bot\Objects\Update as TelegramUpdate;
+use Finite\StateMachine\StateMachine;
 
 
 interface ChatInterface
@@ -21,5 +19,10 @@ interface ChatInterface
     public function init();
     
     public function restore();
+
+    /**
+     * @return StateMachine
+     */
+    public function getFSM();
 
 }
