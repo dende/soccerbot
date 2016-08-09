@@ -2,14 +2,9 @@
 
 namespace Dende\SoccerBot\Model;
 
-use Dende\SoccerBot\Command\CommandFactory;
-use Dende\SoccerBot\Exception\EmptyMessageException;
 use Dende\SoccerBot\Model\Base\GroupChat as BaseGroupChat;
 use Finite\Loader\ArrayLoader;
 use Finite\StatefulInterface;
-use Monolog\Logger;
-use Symfony\Component\Translation\Translator;
-use Telegram\Bot\Objects\Update as TelegramUpdate;
 use Finite\StateMachine\StateMachine as FiniteStateMachine;
 
 
@@ -90,24 +85,6 @@ class GroupChat extends BaseGroupChat implements StatefulInterface, ChatInterfac
 	{
 		$this->state = $state;
 	}
-
-    public function handle(TelegramUpdate $update){
-
-        $message = $update->getMessage();
-        if (is_null($message)){
-            throw new EmptyMessageException();
-        }
-
-        list($commandString, $args) = CommandFactory::commandStringFromMessage($message);
-
-        if ($this->fsm->can($commandString)){
-            $this->fsm->apply(['chat' => $this, 'args' => $args]);
-        } else {
-            $state = $this->fsm->getCurrentState();
-            $command = CommandFactory::createFromString($commandString);
-            $command->run($this, $args, $state);
-        }
-    }
 
     function liveTransition(\Finite\Event\TransitionEvent $e){
         $params = $e->getProperties();

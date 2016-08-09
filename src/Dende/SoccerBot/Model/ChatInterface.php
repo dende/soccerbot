@@ -21,6 +21,5 @@ interface ChatInterface
     public function init();
     
     public function restore();
-    
-    public function handle(TelegramUpdate $update);
+
 }

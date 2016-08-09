@@ -16,15 +16,30 @@ use Finite\State\StateInterface;
 
 abstract class AbstractCommand
 {
-    public function run(ChatInterface $chat, $args, StateInterface $state){
+    protected $args;
+
+    public function __construct($args)
+    {
+        $this->setArgs($args);
+    }
+
+    public function run(ChatInterface $chat){
         if ($chat instanceof PrivateChat){
-            return $this->runPrivate($chat, $args, $state);
+            return $this->runPrivate($chat);
         } else if ($chat instanceof GroupChat){
-            return $this->runGroup($chat, $args, $state);
+            return $this->runGroup($chat);
         }
     }
 
-    abstract protected function runPrivate(PrivateChat $chat, $args, StateInterface $state);
+    abstract protected function runPrivate(PrivateChat $chat);
 
-    abstract protected function runGroup(GroupChat $chat, $args, StateInterface $state);
+    abstract protected function runGroup(GroupChat $chat);
+
+    public function setArgs($args){
+        $this->args = $args;
+    }
+
+    public function getArgs(){
+        return $this->args;
+    }
 }

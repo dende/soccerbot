@@ -2,14 +2,9 @@
 
 namespace Dende\SoccerBot\Model;
 
-use Analog\Analog;
-use Dende\SoccerBot\Command\CommandFactory;
-use Dende\SoccerBot\Exception\CommandNotFoundException;
-use Dende\SoccerBot\Exception\EmptyMessageException;
 use Dende\SoccerBot\Model\Base\PrivateChat as BasePrivateChat;
 use Finite\Loader\ArrayLoader;
 use Finite\StatefulInterface;
-use Telegram\Bot\Objects\Update as TelegramUpdate;
 use Finite\StateMachine\StateMachine as FiniteStateMachine;
 /**
  * Skeleton subclass for representing a row from the 'privatechats' table.
@@ -26,7 +21,6 @@ class PrivateChat extends BasePrivateChat implements StatefulInterface, ChatInte
 	public static $initialState = 'muted';
     /** @var  FiniteStateMachine */
     private $fsm;
-
 
     public function init()
     {
@@ -85,48 +79,5 @@ class PrivateChat extends BasePrivateChat implements StatefulInterface, ChatInte
 	{
 		$this->state = $state;
 	}
-
-    /**
-     * @param TelegramUpdate $update
-     * @return Message|null
-     * @throws \Exception
-     */
-    public function handle(TelegramUpdate $update){
-
-        $message = $update->getMessage();
-        if (is_null($message)){
-            throw new EmptyMessageException();
-        }
-        
-        list($commandString, $args) = CommandFactory::commandStringFromMessage($message);
-
-
-        try{
-            $canTransit = $this->fsm->can($commandString);
-        } catch (\Finite\Exception\TransitionException $e){
-            $canTransit = false;
-        }
-
-        $response = null;
-
-        if ($canTransit){
-
-            $response = $this->fsm->apply(['chat' => $this, 'args' => $args]);
-
-        } else {
-
-            $state = $this->fsm->getCurrentState();
-
-            try {
-                $command = CommandFactory::createFromString($commandString);
-                $response = $command->run($this, $args, $state);
-            } catch (CommandNotFoundException $e){
-                Analog::log('cannot transit or execute command ' . $commandString, Analog::WARNING);
-            }
-
-        }
-
-        return $response;
-    }
 
 }

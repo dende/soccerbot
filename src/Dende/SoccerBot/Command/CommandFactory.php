@@ -11,14 +11,19 @@ use \Analog\Analog;
 
 class CommandFactory
 {
-    public static function createFromString($commandString){
+    public static function createFromString($commandString, $args){
 
         $classname = 'Dende\\SoccerBot\\Command\\'. ucfirst($commandString . 'Command');
         if (class_exists($classname, true)){
-            return new $classname();
+            /** @var AbstractCommand $instance */
+            $instance = new $classname($args);
+        } else {
+            Analog::log("Command $classname not found", Analog::WARNING);
+            $instance = new NoopCommand($commandString);
+
         }
-        Analog::log("Command $classname not found", Analog::WARNING);
-        throw new CommandNotFoundException("CommandNotFound");
+        return $instance;
+        //throw new CommandNotFoundException("CommandNotFound");
     }
 
     public static function commandStringFromMessage(TelegramMessage $message)
@@ -46,12 +51,19 @@ class CommandFactory
             if (count($parts) != 2){
                 throw new InvalidCommandStringException("Wrong kind of command");
             }
-            if ($parts[1] != TELEGRAM_API_USERNAME){
+            if ($parts[1] != TELEGRAM_BOT_USERNAME){
                 throw new InvalidCommandStringException("Wrong Bot username");
             }
             $commandString = $parts[0];
         }
 
         return [$commandString, $args];
+    }
+
+    public static function createFromMessage(TelegramMessage $message)
+    {
+        list($commandString, $args) = CommandFactory::commandStringFromMessage($message);
+        return CommandFactory::createFromString($commandString, $args);
+
     }
 }

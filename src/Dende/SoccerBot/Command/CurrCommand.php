@@ -19,15 +19,15 @@ use Finite\State\StateInterface;
 class CurrCommand extends AbstractCommand
 {
 
-    protected function runPrivate(PrivateChat $chat, $args, StateInterface $state){
-        return $this->runBoth($chat, $args, $state);
+    protected function runPrivate(PrivateChat $chat){
+        return $this->runBoth($chat);
     }
 
-    protected function runGroup(GroupChat $chat, $args, StateInterface $state){
-        return $this->runBoth($chat, $args, $state);
+    protected function runGroup(GroupChat $chat){
+        return $this->runBoth($chat);
     }
 
-    protected function runBoth(ChatInterface $chat, $args, StateInterface $state){
+    protected function runBoth(ChatInterface $chat){
         $currentMatchesCount = MatchQuery::create()->where('matches.status = ?', 'IN_PLAY')->count();
         if ($currentMatchesCount > 0){
 
@@ -40,8 +40,6 @@ class CurrCommand extends AbstractCommand
                     'command.curr.currentMatch',
                     [
                         '%homeTeamName%'  => $currentMatch->getHomeTeam()->getName(),
-                        '%homeTeamEmoji%' => $currentMatch->getHomeTeam()->getEmoji(),
-                        '%awayTeamEmoji%' => $currentMatch->getAwayTeam()->getEmoji(),
                         '%awayTeamName%'  => $currentMatch->getAwayTeam()->getName(),
                         '%homeTeamGoals%' => $currentMatch->getHomeTeamGoals(),
                         '%awayTeamGoals%' => $currentMatch->getAwayTeamGoals()

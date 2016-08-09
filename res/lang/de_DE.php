@@ -10,6 +10,7 @@ return [
         'finished'     => 'Der Endstand lautet *%homeTeamGoals% - %awayTeamGoals%*'
     ],
     'command' => [
+        'noop' => 'Unbekannter Befehl "%command%"',
         'info' => 'Aktueller Status ist %status%.',
         'curr' =>[
             'currentMatches'   => 'Momentan läuft folgendes Spiel:|Momentan laufen folgende Spiele:',
