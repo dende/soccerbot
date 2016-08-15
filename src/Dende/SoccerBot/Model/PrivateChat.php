@@ -6,6 +6,8 @@ use Dende\SoccerBot\Model\Base\PrivateChat as BasePrivateChat;
 use Finite\Loader\ArrayLoader;
 use Finite\StatefulInterface;
 use Finite\StateMachine\StateMachine as FiniteStateMachine;
+use Telegram\Bot\Objects\Message;
+
 /**
  * Skeleton subclass for representing a row from the 'privatechats' table.
  *
@@ -16,42 +18,49 @@ use Finite\StateMachine\StateMachine as FiniteStateMachine;
  * long as it does not already exist in the output directory.
  *
  */
-class PrivateChat extends BasePrivateChat implements StatefulInterface, ChatInterface
+class PrivateChat extends BasePrivateChat implements ChatInterface
 {
     /** @var  FiniteStateMachine */
-    private $fsm;
-    protected $state;
+    private $registerFsm;
+
+    const REGISTER_STATUS_UNREGISTERED = 'unregistered';
+    const REGISTER_STATUS_KEEP_NAME_ASKED = 'keep_name_asked';
+    const REGISTER_STATUS_NAME_ASKED = 'name_asked';
+    const REGISTER_STATUS_REGISTERED = 'registered';
 
     public function init()
     {
-        $this->fsm = new FiniteStateMachine($this);
-        $arrayLoader = new ArrayLoader([
+        $this->registerFsm = new FiniteStateMachine($this);
+        $registerLoader = new ArrayLoader([
             'class'  => 'PrivateChat',
+            'property_path' => 'registerstatus',
             'states' => [
-                'liveticker' => [
-                    'type' => 'normal',
-                    'properties' => []
-                ],
-                'muted' => [
-                    'type' => 'initial',
-                    'properties' => []
-                ]
+                PrivateChat::REGISTER_STATUS_UNREGISTERED    => ['type' => 'initial'],
+                PrivateChat::REGISTER_STATUS_KEEP_NAME_ASKED => ['type' => 'normal'],
+                PrivateChat::REGISTER_STATUS_NAME_ASKED      => ['type' => 'normal'],
+                PrivateChat::REGISTER_STATUS_REGISTERED      => ['type' => 'final'],
             ],
             'transitions' => [
-                'live' => [
-                    'from' => ['muted'],
-                    'to'   => 'liveticker',
-                    'properties' => ['chat' => null, 'args' => null]
+                'ask_keep_name' => [
+                    'from' => 'unregistered',
+                    'to'   => 'keep_name_asked'
                 ],
-                'mute' => [
-                    'from' => ['liveticker'],
-                    'to'   => 'muted',
-                    'properties' => ['chat' => null, 'args' => null]
+                'ask_name' => [
+                    'from' => 'unregistered',
+                    'to'   => 'name_asked',
                 ],
+                'ask_new_name' => [
+                    'from' => 'keep_name_asked',
+                    'to'   => 'name_asked'
+                ],
+                'register' => [
+                    'from' => 'name_asked',
+                    'to'   => 'registered',
+                ]
             ]
         ]);
-        $arrayLoader->load($this->fsm);
-        $this->fsm->initialize();
+        $registerLoader->load($this->registerFsm);
+        $this->registerFsm->initialize();
     }
     
     public function restore(){
@@ -59,28 +68,17 @@ class PrivateChat extends BasePrivateChat implements StatefulInterface, ChatInte
         //TODO: logic for restoring should go here
     }
 
-    /**
-	 * Gets the object state.
-	 *
-	 * @return string
-	 */
-	public function getFiniteState()
-	{
-		return $this->state;
-	}
-	/**
-	 * Sets the object state.
-	 *
-	 * @param string $state
-	 */
-	public function setFiniteState($state)
-	{
-		$this->state = $state;
-	}
+    public function handle(Message $mesage){
+        if ($this->getRegisterstatus() === PrivateChat::REGISTER_STATUS_KEEP_NAME_ASKED){
+            $fsm = $this->getRegisterFsm();
+            ddd($fsm->getCurrentState());
+        }
 
-    public function getFSM()
+    }
+
+    public function getRegisterFsm()
     {
-        return $this->fsm;
+        return $this->registerFsm;
     }
 
 }

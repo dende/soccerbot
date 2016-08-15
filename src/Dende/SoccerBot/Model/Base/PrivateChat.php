@@ -89,6 +89,14 @@ abstract class PrivateChat implements ActiveRecordInterface
     protected $liveticker;
 
     /**
+     * The value for the registerstatus field.
+     *
+     * Note: this column has a database default value of: 'unregistered'
+     * @var        string
+     */
+    protected $registerstatus;
+
+    /**
      * Flag to prevent endless save loop, if this object is referenced
      * by another object which falls in this transaction.
      *
@@ -105,6 +113,7 @@ abstract class PrivateChat implements ActiveRecordInterface
     public function applyDefaultValues()
     {
         $this->liveticker = false;
+        $this->registerstatus = 'unregistered';
     }
 
     /**
@@ -385,6 +394,16 @@ abstract class PrivateChat implements ActiveRecordInterface
     }
 
     /**
+     * Get the [registerstatus] column value.
+     *
+     * @return string
+     */
+    public function getRegisterstatus()
+    {
+        return $this->registerstatus;
+    }
+
+    /**
      * Set the value of [id] column.
      *
      * @param int $v new value
@@ -473,6 +492,26 @@ abstract class PrivateChat implements ActiveRecordInterface
     } // setLiveticker()
 
     /**
+     * Set the value of [registerstatus] column.
+     *
+     * @param string $v new value
+     * @return $this|\Dende\SoccerBot\Model\PrivateChat The current object (for fluent API support)
+     */
+    public function setRegisterstatus($v)
+    {
+        if ($v !== null) {
+            $v = (string) $v;
+        }
+
+        if ($this->registerstatus !== $v) {
+            $this->registerstatus = $v;
+            $this->modifiedColumns[PrivateChatTableMap::COL_REGISTERSTATUS] = true;
+        }
+
+        return $this;
+    } // setRegisterstatus()
+
+    /**
      * Indicates whether the columns in this object are only set to default values.
      *
      * This method can be used in conjunction with isModified() to indicate whether an object is both
@@ -483,6 +522,10 @@ abstract class PrivateChat implements ActiveRecordInterface
     public function hasOnlyDefaultValues()
     {
             if ($this->liveticker !== false) {
+                return false;
+            }
+
+            if ($this->registerstatus !== 'unregistered') {
                 return false;
             }
 
@@ -523,6 +566,9 @@ abstract class PrivateChat implements ActiveRecordInterface
 
             $col = $row[TableMap::TYPE_NUM == $indexType ? 3 + $startcol : PrivateChatTableMap::translateFieldName('Liveticker', TableMap::TYPE_PHPNAME, $indexType)];
             $this->liveticker = (null !== $col) ? (boolean) $col : null;
+
+            $col = $row[TableMap::TYPE_NUM == $indexType ? 4 + $startcol : PrivateChatTableMap::translateFieldName('Registerstatus', TableMap::TYPE_PHPNAME, $indexType)];
+            $this->registerstatus = (null !== $col) ? (string) $col : null;
             $this->resetModified();
 
             $this->setNew(false);
@@ -531,7 +577,7 @@ abstract class PrivateChat implements ActiveRecordInterface
                 $this->ensureConsistency();
             }
 
-            return $startcol + 4; // 4 = PrivateChatTableMap::NUM_HYDRATE_COLUMNS.
+            return $startcol + 5; // 5 = PrivateChatTableMap::NUM_HYDRATE_COLUMNS.
 
         } catch (Exception $e) {
             throw new PropelException(sprintf('Error populating %s object', '\\Dende\\SoccerBot\\Model\\PrivateChat'), 0, $e);
@@ -740,6 +786,9 @@ abstract class PrivateChat implements ActiveRecordInterface
         if ($this->isColumnModified(PrivateChatTableMap::COL_LIVETICKER)) {
             $modifiedColumns[':p' . $index++]  = 'liveticker';
         }
+        if ($this->isColumnModified(PrivateChatTableMap::COL_REGISTERSTATUS)) {
+            $modifiedColumns[':p' . $index++]  = 'registerstatus';
+        }
 
         $sql = sprintf(
             'INSERT INTO privatechats (%s) VALUES (%s)',
@@ -762,6 +811,9 @@ abstract class PrivateChat implements ActiveRecordInterface
                         break;
                     case 'liveticker':
                         $stmt->bindValue($identifier, (int) $this->liveticker, PDO::PARAM_INT);
+                        break;
+                    case 'registerstatus':
+                        $stmt->bindValue($identifier, $this->registerstatus, PDO::PARAM_STR);
                         break;
                 }
             }
@@ -837,6 +889,9 @@ abstract class PrivateChat implements ActiveRecordInterface
             case 3:
                 return $this->getLiveticker();
                 break;
+            case 4:
+                return $this->getRegisterstatus();
+                break;
             default:
                 return null;
                 break;
@@ -870,6 +925,7 @@ abstract class PrivateChat implements ActiveRecordInterface
             $keys[1] => $this->getChatId(),
             $keys[2] => $this->getType(),
             $keys[3] => $this->getLiveticker(),
+            $keys[4] => $this->getRegisterstatus(),
         );
         $virtualColumns = $this->virtualColumns;
         foreach ($virtualColumns as $key => $virtualColumn) {
@@ -921,6 +977,9 @@ abstract class PrivateChat implements ActiveRecordInterface
             case 3:
                 $this->setLiveticker($value);
                 break;
+            case 4:
+                $this->setRegisterstatus($value);
+                break;
         } // switch()
 
         return $this;
@@ -958,6 +1017,9 @@ abstract class PrivateChat implements ActiveRecordInterface
         }
         if (array_key_exists($keys[3], $arr)) {
             $this->setLiveticker($arr[$keys[3]]);
+        }
+        if (array_key_exists($keys[4], $arr)) {
+            $this->setRegisterstatus($arr[$keys[4]]);
         }
     }
 
@@ -1011,6 +1073,9 @@ abstract class PrivateChat implements ActiveRecordInterface
         }
         if ($this->isColumnModified(PrivateChatTableMap::COL_LIVETICKER)) {
             $criteria->add(PrivateChatTableMap::COL_LIVETICKER, $this->liveticker);
+        }
+        if ($this->isColumnModified(PrivateChatTableMap::COL_REGISTERSTATUS)) {
+            $criteria->add(PrivateChatTableMap::COL_REGISTERSTATUS, $this->registerstatus);
         }
 
         return $criteria;
@@ -1101,6 +1166,7 @@ abstract class PrivateChat implements ActiveRecordInterface
         $copyObj->setChatId($this->getChatId());
         $copyObj->setType($this->getType());
         $copyObj->setLiveticker($this->getLiveticker());
+        $copyObj->setRegisterstatus($this->getRegisterstatus());
         if ($makeNew) {
             $copyObj->setNew(true);
             $copyObj->setId(NULL); // this is a auto-increment column, so set to default value
@@ -1140,6 +1206,7 @@ abstract class PrivateChat implements ActiveRecordInterface
         $this->chat_id = null;
         $this->type = null;
         $this->liveticker = null;
+        $this->registerstatus = null;
         $this->alreadyInSave = false;
         $this->clearAllReferences();
         $this->applyDefaultValues();

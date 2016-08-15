@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Dende\SoccerBot\Model\FootballApi;
 use Dende\SoccerBot\Model\Match;
 use Dende\SoccerBot\Model\MatchQuery;
+use Dende\SoccerBot\Model\Message;
 use Dende\SoccerBot\Model\TeamQuery;
 use GuzzleHttp\Client;
 
@@ -19,8 +20,12 @@ class MatchRepository
     public function __construct(FootballApi $footballApi)
     {
         $this->footballApi = $footballApi;
+        $this->init();
     }
 
+    /**
+     * @return Message[]
+     */
     public function update(){
         Analog::log("Updating matches");
         /** @var Match[] $timedMatches */
@@ -31,7 +36,7 @@ class MatchRepository
             ->find();
 
 
-        $liveData = [];
+        $messages = [];
 
         foreach ($timedMatches as $match){
             $date = Carbon::instance($match->getDate());
@@ -39,6 +44,7 @@ class MatchRepository
 
             if ($diff <= 0 && $diff >= -200){
                 //these games started less than 200 minutes ago
+                $info = null;
                 try {
                     $info = $this->updateMatch($match);
                 } catch (\GuzzleHttp\Exception\ServerException $e){
@@ -53,11 +59,74 @@ class MatchRepository
                 }
 
                 if (!is_null($info)){
-                    $liveData[] = ['match' => $match, 'info' => $info];
+                    $message = new Message();
+
+                    $homeTeam = $match->getHomeTeam();
+                    $awayTeam = $match->getAwayTeam();
+
+
+                    if (array_get($info, 'status') == 'IN_PLAY'){
+                        $message->addLine(
+                            'live.matchStarted',
+                            [
+                                '%homeTeamName%'  => $homeTeam->getName(),
+                                '%awayTeamName%'  => $awayTeam->getName(),
+                            ]
+                        );
+                    }
+
+                    if (array_has($info, 'homeTeamGoalsScored')){
+                        $goalsScored         = array_get($info, 'homeTeamGoalsScored');
+                        $teamScoredName      = $homeTeam->getName();
+                        $teamConcededName    = $awayTeam->getName();
+                    } else if (array_has($info, 'awayTeamGoalsScored')){
+                        $goalsScored         = array_get($info, 'awayTeamGoalsScored');
+                        $teamScoredName      = $awayTeam->getName();
+                        $teamConcededName    = $homeTeam->getName();
+                    }
+
+                    if (!empty($goalsScored)){
+                        /** @noinspection PhpUndefinedVariableInspection */
+                        $message->addLine(
+                            'live.teamScored',
+                            [
+                                '%teamScoredName%'   => $teamScoredName,
+                                '%teamConcededName%' => $teamConcededName,
+                                '%goals%'            => $goalsScored
+                            ],
+                            $goalsScored
+                        );
+                        $message->addLine(
+                            'live.newScore',
+                            [
+                                '%homeTeamGoals%' => $match->getHomeTeamGoals(),
+                                '%awayTeamGoals%' => $match->getAwayTeamGoals(),
+                            ]
+                        );
+                    }
+
+                    if (array_get($info, 'status') == 'FINISHED'){
+                        $message->addLine(
+                            'live.finished',
+                            [
+                                '%homeTeamName%' => $homeTeam->getName(),
+                                '%awayTeamName%' => $awayTeam->getName()
+                            ]
+                        );
+                        $message->addLine(
+                            'live.finalScore',
+                            [
+                                '%homeTeamGoals%' => $match->getHomeTeamGoals(),
+                                '%awayTeamGoals%' => $match->getAwayTeamGoals(),
+                            ]
+                        );
+                    }
+                    $messages[] = $message;
+
                 }
             }
         }
-        return $liveData;
+        return $messages;
     }
 
     private function updateMatch(Match $match){
@@ -123,8 +192,5 @@ class MatchRepository
         } else {
             Analog::log('No updates for the matches needed');
         }
-
     }
-
-
 }

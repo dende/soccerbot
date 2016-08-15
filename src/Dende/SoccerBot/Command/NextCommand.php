@@ -7,15 +7,16 @@ use Dende\SoccerBot\Model\GroupChat;
 use Dende\SoccerBot\Model\MatchQuery;
 use Dende\SoccerBot\Model\Message;
 use Dende\SoccerBot\Model\PrivateChat;
+use Telegram\Bot\Objects\Message as TelegramMessage;
 
 class NextCommand extends AbstractCommand
 {
 
-    protected function runPrivate(PrivateChat $chat){
+    protected function runPrivate(PrivateChat $chat, TelegramMessage $message){
         return $this->runBoth();
     }
 
-    protected function runGroup(GroupChat $chat){
+    protected function runGroup(GroupChat $chat, TelegramMessage $message){
         return $this->runBoth();
     }
 

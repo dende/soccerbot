@@ -58,6 +58,7 @@ class ChatFactory
             case "private":
                 $chat = new PrivateChat();
                 $chat->setType('private');
+                $chat->setRegisterstatus(PrivateChat::REGISTER_STATUS_UNREGISTERED);
                 break;
         }
         $chat->setChatId($telegramChat->getId());

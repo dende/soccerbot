@@ -16,6 +16,7 @@ class TeamRepository
     public function __construct(FootballApi $footballApi)
     {
         $this->footballApi = $footballApi;
+        $this->init();
     }
 
     public function init()

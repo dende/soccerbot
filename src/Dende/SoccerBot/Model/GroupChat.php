@@ -7,7 +7,6 @@ use Finite\Loader\ArrayLoader;
 use Finite\StatefulInterface;
 use Finite\StateMachine\StateMachine as FiniteStateMachine;
 
-
 /**
  * Skeleton subclass for representing a row from the 'groupchats' table.
  *
@@ -80,25 +79,9 @@ class GroupChat extends BaseGroupChat implements StatefulInterface, ChatInterfac
 		$this->state = $state;
 	}
 
-    function liveTransition(\Finite\Event\TransitionEvent $e){
-        $params = $e->getProperties();
-        $chat   = array_get($params, 'chat');
-        if (is_null($chat)){
-            throw new \Exception("Chat is null");
-        }
-    }
-
-
-    function muteTransition(\Finite\Event\TransitionEvent $e){
-        $params = $e->getProperties();
-        $chat   = array_get($params, 'chat');
-        if (is_null($chat)){
-            throw new \Exception("Chat is null");
-        }
-    }
-
     public function getFSM()
     {
         return $this->fsm;
     }
+
 }

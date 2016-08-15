@@ -16,10 +16,13 @@ return [
         'mute' => [
             'turnedOn'     => 'Liveticker ausgeschaltet.',
             'alreadyOn'    => 'Liveticker ist bereits ausgeschaltet',
-            'cantTurnOn'   => 'Kann den Liveticker ausgeschaltet',
+            'cantTurnOn'   => 'Kann den Liveticker nicht ausschalten',
         ],
         'noop' => 'Unbekannter Befehl "%command%"',
-        'info' => 'Aktueller Status ist %status%.',
+        'info' => [
+            'muted' => 'Aktueller Status ist gemuted.',
+            'liveticker' => 'Aktueller Status ist Liveticker.',
+        ],
         'curr' =>[
             'currentMatches'   => 'Momentan läuft folgendes Spiel:|Momentan laufen folgende Spiele:',
             'noCurrentMatches' => 'Momentan läuft kein Spiel',
@@ -28,6 +31,15 @@ return [
         'next' => [
             'nextMatch' => '*%homeTeamName%* gegen *%awayTeamName%* (beginnt in %difference%).',
             'nextMatches' => '{1} Das nächste Spiel ist: |[2,Inf[ Die nächsten Spiele sind: ',
+        ],
+        'register' => [
+            'group' => 'Registrierungen bitte im privaten Chat mit dem Bot durchführen',
+            'keepUsername' => 'Dein Benutzername scheint %username% zu sein. Möchtest du diesen Benutzernamen auch für die Wettgruppe benutzen?',
+            'cantRegister' => 'Registrierung nicht möglich',
         ]
+    ],
+    'general' => [
+        'yes' => 'Ja',
+        'no'  => 'Nein',
     ]
 ];

@@ -16,6 +16,10 @@ class Message
         }
     }
 
+    /**
+     * @param Translator $lang
+     * @return null|string
+     */
     public function translate(Translator $lang){
         $text = null;
         foreach ($this->lines as $line){

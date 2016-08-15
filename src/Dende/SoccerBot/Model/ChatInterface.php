@@ -20,9 +20,4 @@ interface ChatInterface
     
     public function restore();
 
-    /**
-     * @return StateMachine
-     */
-    public function getFSM();
-
 }

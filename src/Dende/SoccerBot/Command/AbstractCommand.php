@@ -11,9 +11,10 @@ namespace Dende\SoccerBot\Command;
 
 use Dende\SoccerBot\Model\ChatInterface;
 use Dende\SoccerBot\Model\GroupChat;
+use Dende\SoccerBot\Model\Message;
 use Dende\SoccerBot\Model\PrivateChat;
 use Dende\SoccerBot\Repository\ChatRepository;
-use Finite\State\StateInterface;
+use Telegram\Bot\Objects\Message as TelegramMessage;
 
 abstract class AbstractCommand
 {
@@ -25,17 +26,22 @@ abstract class AbstractCommand
         $this->chatRepo = $chatRepo;
     }
 
-    public function run(ChatInterface $chat){
+    /**
+     * @param ChatInterface $chat
+     * @param TelegramMessage $message
+     * @return Message
+     */
+    public function run(ChatInterface $chat, TelegramMessage $message){
         if ($chat instanceof PrivateChat){
-            return $this->runPrivate($chat);
+            return $this->runPrivate($chat, $message);
         } else if ($chat instanceof GroupChat){
-            return $this->runGroup($chat);
+            return $this->runGroup($chat, $message);
         }
     }
 
-    abstract protected function runPrivate(PrivateChat $chat);
+    abstract protected function runPrivate(PrivateChat $chat, TelegramMessage $message);
 
-    abstract protected function runGroup(GroupChat $chat);
+    abstract protected function runGroup(GroupChat $chat, TelegramMessage $message);
 
     public function setArgs($args){
         $this->args = $args;

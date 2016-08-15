@@ -36,6 +36,7 @@
         <column name="chat_id" type="integer" required="true"/>
         <column name="type" type="varchar" size="20" required="true" />
         <column name="liveticker" type="boolean" required="false" defaultValue="false"/>
+        <column name="registerstatus" type="varchar" size="50" required="true" defaultValue="unregistered"/>
         <unique>
             <unique-column name="chat_id"/>
         </unique>
