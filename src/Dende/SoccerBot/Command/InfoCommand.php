@@ -21,7 +21,7 @@ class InfoCommand extends AbstractCommand
         return $this->runBoth($chat);
     }
 
-    protected function runBoth(StatefulInterface $chat){
+    protected function runBoth($chat){
         /** @var GroupChat|PrivateChat $chat */
 
         $response = $chat->getLiveticker()?'command.info.liveticker':'command.info.muted';

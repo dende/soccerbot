@@ -48,6 +48,16 @@ return [
             'regex' => "Tipps bitte im Format XX:YY abgeben.\n(z.B. 3:2 oder 11:0)",
             'done' => 'Es gibt keine weiteren Spiele für die du Tipps abgeben kannst',
             'info' => 'Dein Tipp für das Spiel %homeTeamName% gegen %awayTeamName% lautet: *%bet%*'
+        ],
+        'betinfo' => [
+            'nothing' => 'Zur Zeit gibt es keine Spiele, auf die getippt werden kann.',
+            'noBets' => 'Du hast zur Zeit keine Tipps abgegeben.',
+            'followingBets' => "Du hast für folgende Spiele Tipps abgegeben:\n",
+            'bet' => '*%homeTeamName%* gegen *%awayTeamName%*: *%bet%*',
+            'noOpen' => 'Es gibt zur Zeit keine Spiele für die du Tipps abgeben kannst.',
+            'followingOpen' => "Du kannst für folgende Spiele noch Tipps abgeben:\n",
+            'open' => '*%homeTeamName%* gegen *%awayTeamName%* am *%date%*',
+
         ]
     ],
     'general' => [

@@ -90,7 +90,6 @@ class BetCommand extends AbstractCommand
         } else {
             /** @var Match $match */
             $match = $openMatches->getFirst();
-            ddd($openMatches);
             $fsm->apply(PrivateChat::BET_TRANSITION_NEXT);
             $chat->setCurrentBetMatch($match);
             $homeTeam = $match->getHomeTeam();

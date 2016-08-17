@@ -12,6 +12,7 @@ use Dende\SoccerBot\Model\TelegramApi;
 use Dende\SoccerBot\Repository\ChatRepository;
 use Dende\SoccerBot\Repository\MatchRepository;
 use Dende\SoccerBot\Repository\TeamRepository;
+use Symfony\Component\Config\Definition\Exception\Exception;
 use Symfony\Component\Translation\Translator;
 use Symfony\Component\Translation\MessageSelector;
 
@@ -65,7 +66,12 @@ class SoccerBot
                 }
             }
 
-			$updates = $this->telegramApi->getUpdates();
+			try {
+			    $updates = $this->telegramApi->getUpdates();
+            } catch (Exception $e){
+                Analog::log('Telegram getupdate threw an exception', Analog::ERROR);
+                continue;
+            }
 
             foreach ($updates as $update){
                 try {

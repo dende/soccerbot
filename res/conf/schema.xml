@@ -70,6 +70,11 @@
         <foreign-key foreignTable="matches" phpName="Match">
             <reference local="match_id" foreign="id"/>
         </foreign-key>
+        <unique>
+            <unique-column name="chat_id"/>
+            <unique-column name="match_id"/>
+        </unique>
+
     </table>
 
 </database>
