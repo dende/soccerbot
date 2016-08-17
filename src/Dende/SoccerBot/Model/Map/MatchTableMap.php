@@ -190,6 +190,20 @@ class MatchTableMap extends TableMap
     1 => ':id',
   ),
 ), null, null, null, false);
+        $this->addRelation('PrivateChat', '\\Dende\\SoccerBot\\Model\\PrivateChat', RelationMap::ONE_TO_MANY, array (
+  0 =>
+  array (
+    0 => ':current_bet_match_id',
+    1 => ':id',
+  ),
+), null, null, 'PrivateChats', false);
+        $this->addRelation('Bet', '\\Dende\\SoccerBot\\Model\\Bet', RelationMap::ONE_TO_MANY, array (
+  0 =>
+  array (
+    0 => ':match_id',
+    1 => ':id',
+  ),
+), null, null, 'Bets', false);
     } // buildRelations()
 
     /**

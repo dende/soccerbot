@@ -14,16 +14,21 @@ use Dende\SoccerBot\Model\GroupChat;
 use Dende\SoccerBot\Model\Message;
 use Dende\SoccerBot\Model\PrivateChat;
 use Dende\SoccerBot\Repository\ChatRepository;
+use Dende\SoccerBot\Repository\MatchRepository;
 use Telegram\Bot\Objects\Message as TelegramMessage;
 
 abstract class AbstractCommand
 {
     protected $args;
+    /** @var ChatRepository $chatRepo */
     protected $chatRepo;
+    /** @var  MatchRepository $matchRepo */
+    protected $matchRepo;
 
-    public function __construct(ChatRepository $chatRepo)
+    public function __construct(ChatRepository $chatRepo, MatchRepository $matchRepo)
     {
         $this->chatRepo = $chatRepo;
+        $this->matchRepo = $matchRepo;
     }
 
     /**

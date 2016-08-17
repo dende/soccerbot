@@ -10,8 +10,10 @@ use Dende\SoccerBot\Model\FootballApi;
 use Dende\SoccerBot\Model\Match;
 use Dende\SoccerBot\Model\MatchQuery;
 use Dende\SoccerBot\Model\Message;
+use Dende\SoccerBot\Model\PrivateChat;
 use Dende\SoccerBot\Model\TeamQuery;
 use GuzzleHttp\Client;
+use Propel\Runtime\Collection\ObjectCollection;
 
 class MatchRepository
 {
@@ -192,5 +194,19 @@ class MatchRepository
         } else {
             Analog::log('No updates for the matches needed');
         }
+    }
+
+    public function getOpenMatchesForChat(PrivateChat $chat){
+        $nextMatches = MatchQuery::create()->where('matches.status = ?', 'TIMED')->orderByDate()->find();
+        $bidMatches  = MatchQuery::create()->useBetQuery()->filterByPrivateChat($chat)->find();
+
+        $collection = new ObjectCollection();
+        foreach ($nextMatches as $match){
+            if (!$bidMatches->contains($match)){
+                $collection->append($match);
+            }
+        }
+
+        return $collection;
     }
 }

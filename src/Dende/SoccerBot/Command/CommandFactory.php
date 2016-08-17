@@ -5,6 +5,7 @@ namespace Dende\SoccerBot\Command;
 
 use Dende\SoccerBot\Exception\InvalidCommandStringException;
 use Dende\SoccerBot\Repository\ChatRepository;
+use Dende\SoccerBot\Repository\MatchRepository;
 use \Telegram\Bot\Objects\Message as TelegramMessage;
 use \Analog\Analog;
 
@@ -12,12 +13,18 @@ use \Analog\Analog;
 class CommandFactory
 {
 
-    public function __construct(ChatRepository $chatRepo)
+    /** @var ChatRepository $chatRepo */
+    protected $chatRepo;
+    /** @var  MatchRepository $matchRepo */
+    protected $matchRepo;
+
+    public function __construct(ChatRepository $chatRepo, MatchRepository $matchRepo)
     {
         $this->chatRepo = $chatRepo;
+        $this->matchRepo = $matchRepo;
     }
 
-    public function createFromString($commandString, $args){
+    public function createFromString($commandString, $args = []){
 
         if (is_null($commandString)){
 
@@ -26,11 +33,11 @@ class CommandFactory
         $classname = 'Dende\\SoccerBot\\Command\\'. ucfirst($commandString . 'Command');
         if (class_exists($classname, true)){
             /** @var AbstractCommand $instance */
-            $instance = new $classname($this->chatRepo);
+            $instance = new $classname($this->chatRepo, $this->matchRepo);
             $instance->setArgs($args);
         } else {
             Analog::log("Command $classname not found", Analog::WARNING);
-            $instance = new NoopCommand($this->chatRepo);
+            $instance = new NoopCommand($this->chatRepo, $this->matchRepo);
             $instance->setArgs($commandString);
         }
         return $instance;

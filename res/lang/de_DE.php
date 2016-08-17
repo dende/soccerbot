@@ -34,12 +34,25 @@ return [
         ],
         'register' => [
             'group' => 'Registrierungen bitte im privaten Chat mit dem Bot durchführen',
-            'keepUsername' => 'Dein Benutzername scheint %username% zu sein. Möchtest du diesen Benutzernamen auch für die Wettgruppe benutzen?',
+            'keepUsername' => 'Dein Benutzername scheint *%username%* zu sein. Möchtest du diesen Benutzernamen auch für die Wettgruppe benutzen?',
             'cantRegister' => 'Registrierung nicht möglich',
+            'transition_ask_name' => 'Bitte gib deinen gewünschten Nutzernamen an:',
+            'success' => 'Registrierung erfolgreich. Dein Nutzername lautet *%username%*.',
+            'regex' => 'Der Nutzername darf nur alphanumerische Zeichen enthalten und muss 3-18 Zeichen lang sein.'
+        ],
+        'bet' => [
+            'register' => 'Bitte zuerst registrieren. Dazu /register benutzen.',
+            'noMatches' => 'Es gibt keine Spiele zu denen du tippen kannst.',
+            'yourBet' => 'Das Spiel %homeTeamName% gegen %awayTeamName% findet am %date% statt. Welches Ergebnis tippst du?',
+            'group' => 'Tipps bitte im privaten Chat abgeben',
+            'regex' => "Tipps bitte im Format XX:YY abgeben.\n(z.B. 3:2 oder 11:0)",
+            'done' => 'Es gibt keine weiteren Spiele für die du Tipps abgeben kannst',
+            'info' => 'Dein Tipp für das Spiel %homeTeamName% gegen %awayTeamName% lautet: *%bet%*'
         ]
     ],
     'general' => [
         'yes' => 'Ja',
         'no'  => 'Nein',
+        'yesOrNoPls' => 'Bitte mit "Ja" oder "Nein" antworten.'
     ]
 ];

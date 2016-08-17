@@ -34,9 +34,15 @@
     <table name="privatechats" phpName="PrivateChat">
         <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true" />
         <column name="chat_id" type="integer" required="true"/>
+        <column name="username" type="varchar" size="30" required="false"/>
         <column name="type" type="varchar" size="20" required="true" />
         <column name="liveticker" type="boolean" required="false" defaultValue="false"/>
         <column name="registerstatus" type="varchar" size="50" required="true" defaultValue="unregistered"/>
+        <column name="betstatus" type="varchar" size="50" required="true" defaultValue="inactive"/>
+        <column name="current_bet_match_id" type="integer" required="false"/>
+        <foreign-key foreignTable="matches" phpName="CurrentBetMatch">
+            <reference local="current_bet_match_id" foreign="id"/>
+        </foreign-key>
         <unique>
             <unique-column name="chat_id"/>
         </unique>
@@ -50,6 +56,20 @@
         <unique>
             <unique-column name="chat_id"/>
         </unique>
+    </table>
+
+    <table name="bets" phpname="Bet">
+        <column name="id" type="integer" required="true" primaryKey="true" autoIncrement="true" />
+        <column name="chat_id" type="integer" required="true"/>
+        <column name="match_id" type="integer" required="true"/>
+        <column name="home_team_goals" type="integer" required="true"/>
+        <column name="away_team_goals" type="integer" required="true"/>
+        <foreign-key foreignTable="privatechats" phpName="PrivateChat">
+            <reference local="chat_id" foreign="id"/>
+        </foreign-key>
+        <foreign-key foreignTable="matches" phpName="Match">
+            <reference local="match_id" foreign="id"/>
+        </foreign-key>
     </table>
 
 </database>

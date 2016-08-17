@@ -66,7 +66,27 @@ use Propel\Runtime\Exception\PropelException;
  * @method     ChildMatchQuery rightJoinWithAwayTeam() Adds a RIGHT JOIN clause and with to the query using the AwayTeam relation
  * @method     ChildMatchQuery innerJoinWithAwayTeam() Adds a INNER JOIN clause and with to the query using the AwayTeam relation
  *
- * @method     \Dende\SoccerBot\Model\TeamQuery endUse() Finalizes a secondary criteria and merges it with its primary Criteria
+ * @method     ChildMatchQuery leftJoinPrivateChat($relationAlias = null) Adds a LEFT JOIN clause to the query using the PrivateChat relation
+ * @method     ChildMatchQuery rightJoinPrivateChat($relationAlias = null) Adds a RIGHT JOIN clause to the query using the PrivateChat relation
+ * @method     ChildMatchQuery innerJoinPrivateChat($relationAlias = null) Adds a INNER JOIN clause to the query using the PrivateChat relation
+ *
+ * @method     ChildMatchQuery joinWithPrivateChat($joinType = Criteria::INNER_JOIN) Adds a join clause and with to the query using the PrivateChat relation
+ *
+ * @method     ChildMatchQuery leftJoinWithPrivateChat() Adds a LEFT JOIN clause and with to the query using the PrivateChat relation
+ * @method     ChildMatchQuery rightJoinWithPrivateChat() Adds a RIGHT JOIN clause and with to the query using the PrivateChat relation
+ * @method     ChildMatchQuery innerJoinWithPrivateChat() Adds a INNER JOIN clause and with to the query using the PrivateChat relation
+ *
+ * @method     ChildMatchQuery leftJoinBet($relationAlias = null) Adds a LEFT JOIN clause to the query using the Bet relation
+ * @method     ChildMatchQuery rightJoinBet($relationAlias = null) Adds a RIGHT JOIN clause to the query using the Bet relation
+ * @method     ChildMatchQuery innerJoinBet($relationAlias = null) Adds a INNER JOIN clause to the query using the Bet relation
+ *
+ * @method     ChildMatchQuery joinWithBet($joinType = Criteria::INNER_JOIN) Adds a join clause and with to the query using the Bet relation
+ *
+ * @method     ChildMatchQuery leftJoinWithBet() Adds a LEFT JOIN clause and with to the query using the Bet relation
+ * @method     ChildMatchQuery rightJoinWithBet() Adds a RIGHT JOIN clause and with to the query using the Bet relation
+ * @method     ChildMatchQuery innerJoinWithBet() Adds a INNER JOIN clause and with to the query using the Bet relation
+ *
+ * @method     \Dende\SoccerBot\Model\TeamQuery|\Dende\SoccerBot\Model\PrivateChatQuery|\Dende\SoccerBot\Model\BetQuery endUse() Finalizes a secondary criteria and merges it with its primary Criteria
  *
  * @method     ChildMatch findOne(ConnectionInterface $con = null) Return the first ChildMatch matching the query
  * @method     ChildMatch findOneOrCreate(ConnectionInterface $con = null) Return the first ChildMatch matching the query, or a new ChildMatch object populated from the query conditions when no match is found
@@ -745,6 +765,152 @@ abstract class MatchQuery extends ModelCriteria
         return $this
             ->joinAwayTeam($relationAlias, $joinType)
             ->useQuery($relationAlias ? $relationAlias : 'AwayTeam', '\Dende\SoccerBot\Model\TeamQuery');
+    }
+
+    /**
+     * Filter the query by a related \Dende\SoccerBot\Model\PrivateChat object
+     *
+     * @param \Dende\SoccerBot\Model\PrivateChat|ObjectCollection $privateChat the related object to use as filter
+     * @param string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
+     *
+     * @return ChildMatchQuery The current query, for fluid interface
+     */
+    public function filterByPrivateChat($privateChat, $comparison = null)
+    {
+        if ($privateChat instanceof \Dende\SoccerBot\Model\PrivateChat) {
+            return $this
+                ->addUsingAlias(MatchTableMap::COL_ID, $privateChat->getCurrentBetMatchId(), $comparison);
+        } elseif ($privateChat instanceof ObjectCollection) {
+            return $this
+                ->usePrivateChatQuery()
+                ->filterByPrimaryKeys($privateChat->getPrimaryKeys())
+                ->endUse();
+        } else {
+            throw new PropelException('filterByPrivateChat() only accepts arguments of type \Dende\SoccerBot\Model\PrivateChat or Collection');
+        }
+    }
+
+    /**
+     * Adds a JOIN clause to the query using the PrivateChat relation
+     *
+     * @param     string $relationAlias optional alias for the relation
+     * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
+     *
+     * @return $this|ChildMatchQuery The current query, for fluid interface
+     */
+    public function joinPrivateChat($relationAlias = null, $joinType = Criteria::LEFT_JOIN)
+    {
+        $tableMap = $this->getTableMap();
+        $relationMap = $tableMap->getRelation('PrivateChat');
+
+        // create a ModelJoin object for this join
+        $join = new ModelJoin();
+        $join->setJoinType($joinType);
+        $join->setRelationMap($relationMap, $this->useAliasInSQL ? $this->getModelAlias() : null, $relationAlias);
+        if ($previousJoin = $this->getPreviousJoin()) {
+            $join->setPreviousJoin($previousJoin);
+        }
+
+        // add the ModelJoin to the current object
+        if ($relationAlias) {
+            $this->addAlias($relationAlias, $relationMap->getRightTable()->getName());
+            $this->addJoinObject($join, $relationAlias);
+        } else {
+            $this->addJoinObject($join, 'PrivateChat');
+        }
+
+        return $this;
+    }
+
+    /**
+     * Use the PrivateChat relation PrivateChat object
+     *
+     * @see useQuery()
+     *
+     * @param     string $relationAlias optional alias for the relation,
+     *                                   to be used as main alias in the secondary query
+     * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
+     *
+     * @return \Dende\SoccerBot\Model\PrivateChatQuery A secondary query class using the current class as primary query
+     */
+    public function usePrivateChatQuery($relationAlias = null, $joinType = Criteria::LEFT_JOIN)
+    {
+        return $this
+            ->joinPrivateChat($relationAlias, $joinType)
+            ->useQuery($relationAlias ? $relationAlias : 'PrivateChat', '\Dende\SoccerBot\Model\PrivateChatQuery');
+    }
+
+    /**
+     * Filter the query by a related \Dende\SoccerBot\Model\Bet object
+     *
+     * @param \Dende\SoccerBot\Model\Bet|ObjectCollection $bet the related object to use as filter
+     * @param string $comparison Operator to use for the column comparison, defaults to Criteria::EQUAL
+     *
+     * @return ChildMatchQuery The current query, for fluid interface
+     */
+    public function filterByBet($bet, $comparison = null)
+    {
+        if ($bet instanceof \Dende\SoccerBot\Model\Bet) {
+            return $this
+                ->addUsingAlias(MatchTableMap::COL_ID, $bet->getMatchId(), $comparison);
+        } elseif ($bet instanceof ObjectCollection) {
+            return $this
+                ->useBetQuery()
+                ->filterByPrimaryKeys($bet->getPrimaryKeys())
+                ->endUse();
+        } else {
+            throw new PropelException('filterByBet() only accepts arguments of type \Dende\SoccerBot\Model\Bet or Collection');
+        }
+    }
+
+    /**
+     * Adds a JOIN clause to the query using the Bet relation
+     *
+     * @param     string $relationAlias optional alias for the relation
+     * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
+     *
+     * @return $this|ChildMatchQuery The current query, for fluid interface
+     */
+    public function joinBet($relationAlias = null, $joinType = Criteria::INNER_JOIN)
+    {
+        $tableMap = $this->getTableMap();
+        $relationMap = $tableMap->getRelation('Bet');
+
+        // create a ModelJoin object for this join
+        $join = new ModelJoin();
+        $join->setJoinType($joinType);
+        $join->setRelationMap($relationMap, $this->useAliasInSQL ? $this->getModelAlias() : null, $relationAlias);
+        if ($previousJoin = $this->getPreviousJoin()) {
+            $join->setPreviousJoin($previousJoin);
+        }
+
+        // add the ModelJoin to the current object
+        if ($relationAlias) {
+            $this->addAlias($relationAlias, $relationMap->getRightTable()->getName());
+            $this->addJoinObject($join, $relationAlias);
+        } else {
+            $this->addJoinObject($join, 'Bet');
+        }
+
+        return $this;
+    }
+
+    /**
+     * Use the Bet relation Bet object
+     *
+     * @see useQuery()
+     *
+     * @param     string $relationAlias optional alias for the relation,
+     *                                   to be used as main alias in the secondary query
+     * @param     string $joinType Accepted values are null, 'left join', 'right join', 'inner join'
+     *
+     * @return \Dende\SoccerBot\Model\BetQuery A secondary query class using the current class as primary query
+     */
+    public function useBetQuery($relationAlias = null, $joinType = Criteria::INNER_JOIN)
+    {
+        return $this
+            ->joinBet($relationAlias, $joinType)
+            ->useQuery($relationAlias ? $relationAlias : 'Bet', '\Dende\SoccerBot\Model\BetQuery');
     }
 
     /**

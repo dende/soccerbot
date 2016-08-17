@@ -2,8 +2,8 @@
 
 namespace Dende\SoccerBot\Model\Map;
 
-use Dende\SoccerBot\Model\PrivateChat;
-use Dende\SoccerBot\Model\PrivateChatQuery;
+use Dende\SoccerBot\Model\Bet;
+use Dende\SoccerBot\Model\BetQuery;
 use Propel\Runtime\Propel;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\ActiveQuery\InstancePoolTrait;
@@ -16,7 +16,7 @@ use Propel\Runtime\Map\TableMapTrait;
 
 
 /**
- * This class defines the structure of the 'privatechats' table.
+ * This class defines the structure of the 'bets' table.
  *
  *
  *
@@ -26,7 +26,7 @@ use Propel\Runtime\Map\TableMapTrait;
  * (i.e. if it's a text column type).
  *
  */
-class PrivateChatTableMap extends TableMap
+class BetTableMap extends TableMap
 {
     use InstancePoolTrait;
     use TableMapTrait;
@@ -34,7 +34,7 @@ class PrivateChatTableMap extends TableMap
     /**
      * The (dot-path) name of this class
      */
-    const CLASS_NAME = 'Dende.SoccerBot.Model.Map.PrivateChatTableMap';
+    const CLASS_NAME = 'Dende.SoccerBot.Model.Map.BetTableMap';
 
     /**
      * The default database name for this class
@@ -44,22 +44,22 @@ class PrivateChatTableMap extends TableMap
     /**
      * The table name for this class
      */
-    const TABLE_NAME = 'privatechats';
+    const TABLE_NAME = 'bets';
 
     /**
      * The related Propel class for this table
      */
-    const OM_CLASS = '\\Dende\\SoccerBot\\Model\\PrivateChat';
+    const OM_CLASS = '\\Dende\\SoccerBot\\Model\\Bet';
 
     /**
      * A class that can be returned by this tableMap
      */
-    const CLASS_DEFAULT = 'Dende.SoccerBot.Model.PrivateChat';
+    const CLASS_DEFAULT = 'Dende.SoccerBot.Model.Bet';
 
     /**
      * The total number of columns
      */
-    const NUM_COLUMNS = 8;
+    const NUM_COLUMNS = 5;
 
     /**
      * The number of lazy-loaded columns
@@ -69,47 +69,32 @@ class PrivateChatTableMap extends TableMap
     /**
      * The number of columns to hydrate (NUM_COLUMNS - NUM_LAZY_LOAD_COLUMNS)
      */
-    const NUM_HYDRATE_COLUMNS = 8;
+    const NUM_HYDRATE_COLUMNS = 5;
 
     /**
      * the column name for the id field
      */
-    const COL_ID = 'privatechats.id';
+    const COL_ID = 'bets.id';
 
     /**
      * the column name for the chat_id field
      */
-    const COL_CHAT_ID = 'privatechats.chat_id';
+    const COL_CHAT_ID = 'bets.chat_id';
 
     /**
-     * the column name for the username field
+     * the column name for the match_id field
      */
-    const COL_USERNAME = 'privatechats.username';
+    const COL_MATCH_ID = 'bets.match_id';
 
     /**
-     * the column name for the type field
+     * the column name for the home_team_goals field
      */
-    const COL_TYPE = 'privatechats.type';
+    const COL_HOME_TEAM_GOALS = 'bets.home_team_goals';
 
     /**
-     * the column name for the liveticker field
+     * the column name for the away_team_goals field
      */
-    const COL_LIVETICKER = 'privatechats.liveticker';
-
-    /**
-     * the column name for the registerstatus field
-     */
-    const COL_REGISTERSTATUS = 'privatechats.registerstatus';
-
-    /**
-     * the column name for the betstatus field
-     */
-    const COL_BETSTATUS = 'privatechats.betstatus';
-
-    /**
-     * the column name for the current_bet_match_id field
-     */
-    const COL_CURRENT_BET_MATCH_ID = 'privatechats.current_bet_match_id';
+    const COL_AWAY_TEAM_GOALS = 'bets.away_team_goals';
 
     /**
      * The default string format for model objects of the related table
@@ -123,11 +108,11 @@ class PrivateChatTableMap extends TableMap
      * e.g. self::$fieldNames[self::TYPE_PHPNAME][0] = 'Id'
      */
     protected static $fieldNames = array (
-        self::TYPE_PHPNAME       => array('Id', 'ChatId', 'Username', 'Type', 'Liveticker', 'Registerstatus', 'Betstatus', 'CurrentBetMatchId', ),
-        self::TYPE_CAMELNAME     => array('id', 'chatId', 'username', 'type', 'liveticker', 'registerstatus', 'betstatus', 'currentBetMatchId', ),
-        self::TYPE_COLNAME       => array(PrivateChatTableMap::COL_ID, PrivateChatTableMap::COL_CHAT_ID, PrivateChatTableMap::COL_USERNAME, PrivateChatTableMap::COL_TYPE, PrivateChatTableMap::COL_LIVETICKER, PrivateChatTableMap::COL_REGISTERSTATUS, PrivateChatTableMap::COL_BETSTATUS, PrivateChatTableMap::COL_CURRENT_BET_MATCH_ID, ),
-        self::TYPE_FIELDNAME     => array('id', 'chat_id', 'username', 'type', 'liveticker', 'registerstatus', 'betstatus', 'current_bet_match_id', ),
-        self::TYPE_NUM           => array(0, 1, 2, 3, 4, 5, 6, 7, )
+        self::TYPE_PHPNAME       => array('Id', 'ChatId', 'MatchId', 'HomeTeamGoals', 'AwayTeamGoals', ),
+        self::TYPE_CAMELNAME     => array('id', 'chatId', 'matchId', 'homeTeamGoals', 'awayTeamGoals', ),
+        self::TYPE_COLNAME       => array(BetTableMap::COL_ID, BetTableMap::COL_CHAT_ID, BetTableMap::COL_MATCH_ID, BetTableMap::COL_HOME_TEAM_GOALS, BetTableMap::COL_AWAY_TEAM_GOALS, ),
+        self::TYPE_FIELDNAME     => array('id', 'chat_id', 'match_id', 'home_team_goals', 'away_team_goals', ),
+        self::TYPE_NUM           => array(0, 1, 2, 3, 4, )
     );
 
     /**
@@ -137,11 +122,11 @@ class PrivateChatTableMap extends TableMap
      * e.g. self::$fieldKeys[self::TYPE_PHPNAME]['Id'] = 0
      */
     protected static $fieldKeys = array (
-        self::TYPE_PHPNAME       => array('Id' => 0, 'ChatId' => 1, 'Username' => 2, 'Type' => 3, 'Liveticker' => 4, 'Registerstatus' => 5, 'Betstatus' => 6, 'CurrentBetMatchId' => 7, ),
-        self::TYPE_CAMELNAME     => array('id' => 0, 'chatId' => 1, 'username' => 2, 'type' => 3, 'liveticker' => 4, 'registerstatus' => 5, 'betstatus' => 6, 'currentBetMatchId' => 7, ),
-        self::TYPE_COLNAME       => array(PrivateChatTableMap::COL_ID => 0, PrivateChatTableMap::COL_CHAT_ID => 1, PrivateChatTableMap::COL_USERNAME => 2, PrivateChatTableMap::COL_TYPE => 3, PrivateChatTableMap::COL_LIVETICKER => 4, PrivateChatTableMap::COL_REGISTERSTATUS => 5, PrivateChatTableMap::COL_BETSTATUS => 6, PrivateChatTableMap::COL_CURRENT_BET_MATCH_ID => 7, ),
-        self::TYPE_FIELDNAME     => array('id' => 0, 'chat_id' => 1, 'username' => 2, 'type' => 3, 'liveticker' => 4, 'registerstatus' => 5, 'betstatus' => 6, 'current_bet_match_id' => 7, ),
-        self::TYPE_NUM           => array(0, 1, 2, 3, 4, 5, 6, 7, )
+        self::TYPE_PHPNAME       => array('Id' => 0, 'ChatId' => 1, 'MatchId' => 2, 'HomeTeamGoals' => 3, 'AwayTeamGoals' => 4, ),
+        self::TYPE_CAMELNAME     => array('id' => 0, 'chatId' => 1, 'matchId' => 2, 'homeTeamGoals' => 3, 'awayTeamGoals' => 4, ),
+        self::TYPE_COLNAME       => array(BetTableMap::COL_ID => 0, BetTableMap::COL_CHAT_ID => 1, BetTableMap::COL_MATCH_ID => 2, BetTableMap::COL_HOME_TEAM_GOALS => 3, BetTableMap::COL_AWAY_TEAM_GOALS => 4, ),
+        self::TYPE_FIELDNAME     => array('id' => 0, 'chat_id' => 1, 'match_id' => 2, 'home_team_goals' => 3, 'away_team_goals' => 4, ),
+        self::TYPE_NUM           => array(0, 1, 2, 3, 4, )
     );
 
     /**
@@ -154,21 +139,18 @@ class PrivateChatTableMap extends TableMap
     public function initialize()
     {
         // attributes
-        $this->setName('privatechats');
-        $this->setPhpName('PrivateChat');
+        $this->setName('bets');
+        $this->setPhpName('Bet');
         $this->setIdentifierQuoting(false);
-        $this->setClassName('\\Dende\\SoccerBot\\Model\\PrivateChat');
+        $this->setClassName('\\Dende\\SoccerBot\\Model\\Bet');
         $this->setPackage('Dende.SoccerBot.Model');
         $this->setUseIdGenerator(true);
         // columns
         $this->addPrimaryKey('id', 'Id', 'INTEGER', true, null, null);
-        $this->addColumn('chat_id', 'ChatId', 'INTEGER', true, null, null);
-        $this->addColumn('username', 'Username', 'VARCHAR', false, 30, null);
-        $this->addColumn('type', 'Type', 'VARCHAR', true, 20, null);
-        $this->addColumn('liveticker', 'Liveticker', 'BOOLEAN', false, 1, false);
-        $this->addColumn('registerstatus', 'Registerstatus', 'VARCHAR', true, 50, 'unregistered');
-        $this->addColumn('betstatus', 'Betstatus', 'VARCHAR', true, 50, 'inactive');
-        $this->addForeignKey('current_bet_match_id', 'CurrentBetMatchId', 'INTEGER', 'matches', 'id', false, null, null);
+        $this->addForeignKey('chat_id', 'ChatId', 'INTEGER', 'privatechats', 'id', true, null, null);
+        $this->addForeignKey('match_id', 'MatchId', 'INTEGER', 'matches', 'id', true, null, null);
+        $this->addColumn('home_team_goals', 'HomeTeamGoals', 'INTEGER', true, null, null);
+        $this->addColumn('away_team_goals', 'AwayTeamGoals', 'INTEGER', true, null, null);
     } // initialize()
 
     /**
@@ -176,20 +158,20 @@ class PrivateChatTableMap extends TableMap
      */
     public function buildRelations()
     {
-        $this->addRelation('CurrentBetMatch', '\\Dende\\SoccerBot\\Model\\Match', RelationMap::MANY_TO_ONE, array (
-  0 =>
-  array (
-    0 => ':current_bet_match_id',
-    1 => ':id',
-  ),
-), null, null, null, false);
-        $this->addRelation('Bet', '\\Dende\\SoccerBot\\Model\\Bet', RelationMap::ONE_TO_MANY, array (
+        $this->addRelation('PrivateChat', '\\Dende\\SoccerBot\\Model\\PrivateChat', RelationMap::MANY_TO_ONE, array (
   0 =>
   array (
     0 => ':chat_id',
     1 => ':id',
   ),
-), null, null, 'Bets', false);
+), null, null, null, false);
+        $this->addRelation('Match', '\\Dende\\SoccerBot\\Model\\Match', RelationMap::MANY_TO_ONE, array (
+  0 =>
+  array (
+    0 => ':match_id',
+    1 => ':id',
+  ),
+), null, null, null, false);
     } // buildRelations()
 
     /**
@@ -249,7 +231,7 @@ class PrivateChatTableMap extends TableMap
      */
     public static function getOMClass($withPrefix = true)
     {
-        return $withPrefix ? PrivateChatTableMap::CLASS_DEFAULT : PrivateChatTableMap::OM_CLASS;
+        return $withPrefix ? BetTableMap::CLASS_DEFAULT : BetTableMap::OM_CLASS;
     }
 
     /**
@@ -263,22 +245,22 @@ class PrivateChatTableMap extends TableMap
      *
      * @throws PropelException Any exceptions caught during processing will be
      *                         rethrown wrapped into a PropelException.
-     * @return array           (PrivateChat object, last column rank)
+     * @return array           (Bet object, last column rank)
      */
     public static function populateObject($row, $offset = 0, $indexType = TableMap::TYPE_NUM)
     {
-        $key = PrivateChatTableMap::getPrimaryKeyHashFromRow($row, $offset, $indexType);
-        if (null !== ($obj = PrivateChatTableMap::getInstanceFromPool($key))) {
+        $key = BetTableMap::getPrimaryKeyHashFromRow($row, $offset, $indexType);
+        if (null !== ($obj = BetTableMap::getInstanceFromPool($key))) {
             // We no longer rehydrate the object, since this can cause data loss.
             // See http://www.propelorm.org/ticket/509
             // $obj->hydrate($row, $offset, true); // rehydrate
-            $col = $offset + PrivateChatTableMap::NUM_HYDRATE_COLUMNS;
+            $col = $offset + BetTableMap::NUM_HYDRATE_COLUMNS;
         } else {
-            $cls = PrivateChatTableMap::OM_CLASS;
-            /** @var PrivateChat $obj */
+            $cls = BetTableMap::OM_CLASS;
+            /** @var Bet $obj */
             $obj = new $cls();
             $col = $obj->hydrate($row, $offset, false, $indexType);
-            PrivateChatTableMap::addInstanceToPool($obj, $key);
+            BetTableMap::addInstanceToPool($obj, $key);
         }
 
         return array($obj, $col);
@@ -301,18 +283,18 @@ class PrivateChatTableMap extends TableMap
         $cls = static::getOMClass(false);
         // populate the object(s)
         while ($row = $dataFetcher->fetch()) {
-            $key = PrivateChatTableMap::getPrimaryKeyHashFromRow($row, 0, $dataFetcher->getIndexType());
-            if (null !== ($obj = PrivateChatTableMap::getInstanceFromPool($key))) {
+            $key = BetTableMap::getPrimaryKeyHashFromRow($row, 0, $dataFetcher->getIndexType());
+            if (null !== ($obj = BetTableMap::getInstanceFromPool($key))) {
                 // We no longer rehydrate the object, since this can cause data loss.
                 // See http://www.propelorm.org/ticket/509
                 // $obj->hydrate($row, 0, true); // rehydrate
                 $results[] = $obj;
             } else {
-                /** @var PrivateChat $obj */
+                /** @var Bet $obj */
                 $obj = new $cls();
                 $obj->hydrate($row);
                 $results[] = $obj;
-                PrivateChatTableMap::addInstanceToPool($obj, $key);
+                BetTableMap::addInstanceToPool($obj, $key);
             } // if key exists
         }
 
@@ -333,23 +315,17 @@ class PrivateChatTableMap extends TableMap
     public static function addSelectColumns(Criteria $criteria, $alias = null)
     {
         if (null === $alias) {
-            $criteria->addSelectColumn(PrivateChatTableMap::COL_ID);
-            $criteria->addSelectColumn(PrivateChatTableMap::COL_CHAT_ID);
-            $criteria->addSelectColumn(PrivateChatTableMap::COL_USERNAME);
-            $criteria->addSelectColumn(PrivateChatTableMap::COL_TYPE);
-            $criteria->addSelectColumn(PrivateChatTableMap::COL_LIVETICKER);
-            $criteria->addSelectColumn(PrivateChatTableMap::COL_REGISTERSTATUS);
-            $criteria->addSelectColumn(PrivateChatTableMap::COL_BETSTATUS);
-            $criteria->addSelectColumn(PrivateChatTableMap::COL_CURRENT_BET_MATCH_ID);
+            $criteria->addSelectColumn(BetTableMap::COL_ID);
+            $criteria->addSelectColumn(BetTableMap::COL_CHAT_ID);
+            $criteria->addSelectColumn(BetTableMap::COL_MATCH_ID);
+            $criteria->addSelectColumn(BetTableMap::COL_HOME_TEAM_GOALS);
+            $criteria->addSelectColumn(BetTableMap::COL_AWAY_TEAM_GOALS);
         } else {
             $criteria->addSelectColumn($alias . '.id');
             $criteria->addSelectColumn($alias . '.chat_id');
-            $criteria->addSelectColumn($alias . '.username');
-            $criteria->addSelectColumn($alias . '.type');
-            $criteria->addSelectColumn($alias . '.liveticker');
-            $criteria->addSelectColumn($alias . '.registerstatus');
-            $criteria->addSelectColumn($alias . '.betstatus');
-            $criteria->addSelectColumn($alias . '.current_bet_match_id');
+            $criteria->addSelectColumn($alias . '.match_id');
+            $criteria->addSelectColumn($alias . '.home_team_goals');
+            $criteria->addSelectColumn($alias . '.away_team_goals');
         }
     }
 
@@ -362,7 +338,7 @@ class PrivateChatTableMap extends TableMap
      */
     public static function getTableMap()
     {
-        return Propel::getServiceContainer()->getDatabaseMap(PrivateChatTableMap::DATABASE_NAME)->getTable(PrivateChatTableMap::TABLE_NAME);
+        return Propel::getServiceContainer()->getDatabaseMap(BetTableMap::DATABASE_NAME)->getTable(BetTableMap::TABLE_NAME);
     }
 
     /**
@@ -370,16 +346,16 @@ class PrivateChatTableMap extends TableMap
      */
     public static function buildTableMap()
     {
-        $dbMap = Propel::getServiceContainer()->getDatabaseMap(PrivateChatTableMap::DATABASE_NAME);
-        if (!$dbMap->hasTable(PrivateChatTableMap::TABLE_NAME)) {
-            $dbMap->addTableObject(new PrivateChatTableMap());
+        $dbMap = Propel::getServiceContainer()->getDatabaseMap(BetTableMap::DATABASE_NAME);
+        if (!$dbMap->hasTable(BetTableMap::TABLE_NAME)) {
+            $dbMap->addTableObject(new BetTableMap());
         }
     }
 
     /**
-     * Performs a DELETE on the database, given a PrivateChat or Criteria object OR a primary key value.
+     * Performs a DELETE on the database, given a Bet or Criteria object OR a primary key value.
      *
-     * @param mixed               $values Criteria or PrivateChat object or primary key or array of primary keys
+     * @param mixed               $values Criteria or Bet object or primary key or array of primary keys
      *              which is used to create the DELETE statement
      * @param  ConnectionInterface $con the connection to use
      * @return int             The number of affected rows (if supported by underlying database driver).  This includes CASCADE-related rows
@@ -390,27 +366,27 @@ class PrivateChatTableMap extends TableMap
      public static function doDelete($values, ConnectionInterface $con = null)
      {
         if (null === $con) {
-            $con = Propel::getServiceContainer()->getWriteConnection(PrivateChatTableMap::DATABASE_NAME);
+            $con = Propel::getServiceContainer()->getWriteConnection(BetTableMap::DATABASE_NAME);
         }
 
         if ($values instanceof Criteria) {
             // rename for clarity
             $criteria = $values;
-        } elseif ($values instanceof \Dende\SoccerBot\Model\PrivateChat) { // it's a model object
+        } elseif ($values instanceof \Dende\SoccerBot\Model\Bet) { // it's a model object
             // create criteria based on pk values
             $criteria = $values->buildPkeyCriteria();
         } else { // it's a primary key, or an array of pks
-            $criteria = new Criteria(PrivateChatTableMap::DATABASE_NAME);
-            $criteria->add(PrivateChatTableMap::COL_ID, (array) $values, Criteria::IN);
+            $criteria = new Criteria(BetTableMap::DATABASE_NAME);
+            $criteria->add(BetTableMap::COL_ID, (array) $values, Criteria::IN);
         }
 
-        $query = PrivateChatQuery::create()->mergeWith($criteria);
+        $query = BetQuery::create()->mergeWith($criteria);
 
         if ($values instanceof Criteria) {
-            PrivateChatTableMap::clearInstancePool();
+            BetTableMap::clearInstancePool();
         } elseif (!is_object($values)) { // it's a primary key, or an array of pks
             foreach ((array) $values as $singleval) {
-                PrivateChatTableMap::removeInstanceFromPool($singleval);
+                BetTableMap::removeInstanceFromPool($singleval);
             }
         }
 
@@ -418,20 +394,20 @@ class PrivateChatTableMap extends TableMap
     }
 
     /**
-     * Deletes all rows from the privatechats table.
+     * Deletes all rows from the bets table.
      *
      * @param ConnectionInterface $con the connection to use
      * @return int The number of affected rows (if supported by underlying database driver).
      */
     public static function doDeleteAll(ConnectionInterface $con = null)
     {
-        return PrivateChatQuery::create()->doDeleteAll($con);
+        return BetQuery::create()->doDeleteAll($con);
     }
 
     /**
-     * Performs an INSERT on the database, given a PrivateChat or Criteria object.
+     * Performs an INSERT on the database, given a Bet or Criteria object.
      *
-     * @param mixed               $criteria Criteria or PrivateChat object containing data that is used to create the INSERT statement.
+     * @param mixed               $criteria Criteria or Bet object containing data that is used to create the INSERT statement.
      * @param ConnectionInterface $con the ConnectionInterface connection to use
      * @return mixed           The new primary key.
      * @throws PropelException Any exceptions caught during processing will be
@@ -440,22 +416,22 @@ class PrivateChatTableMap extends TableMap
     public static function doInsert($criteria, ConnectionInterface $con = null)
     {
         if (null === $con) {
-            $con = Propel::getServiceContainer()->getWriteConnection(PrivateChatTableMap::DATABASE_NAME);
+            $con = Propel::getServiceContainer()->getWriteConnection(BetTableMap::DATABASE_NAME);
         }
 
         if ($criteria instanceof Criteria) {
             $criteria = clone $criteria; // rename for clarity
         } else {
-            $criteria = $criteria->buildCriteria(); // build Criteria from PrivateChat object
+            $criteria = $criteria->buildCriteria(); // build Criteria from Bet object
         }
 
-        if ($criteria->containsKey(PrivateChatTableMap::COL_ID) && $criteria->keyContainsValue(PrivateChatTableMap::COL_ID) ) {
-            throw new PropelException('Cannot insert a value for auto-increment primary key ('.PrivateChatTableMap::COL_ID.')');
+        if ($criteria->containsKey(BetTableMap::COL_ID) && $criteria->keyContainsValue(BetTableMap::COL_ID) ) {
+            throw new PropelException('Cannot insert a value for auto-increment primary key ('.BetTableMap::COL_ID.')');
         }
 
 
         // Set the correct dbName
-        $query = PrivateChatQuery::create()->mergeWith($criteria);
+        $query = BetQuery::create()->mergeWith($criteria);
 
         // use transaction because $criteria could contain info
         // for more than one table (I guess, conceivably)
@@ -464,7 +440,7 @@ class PrivateChatTableMap extends TableMap
         });
     }
 
-} // PrivateChatTableMap
+} // BetTableMap
 // This is the static code needed to register the TableMap for this table with the main Propel class.
 //
-PrivateChatTableMap::buildTableMap();
+BetTableMap::buildTableMap();

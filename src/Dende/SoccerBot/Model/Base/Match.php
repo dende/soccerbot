@@ -5,15 +5,23 @@ namespace Dende\SoccerBot\Model\Base;
 use \DateTime;
 use \Exception;
 use \PDO;
+use Dende\SoccerBot\Model\Bet as ChildBet;
+use Dende\SoccerBot\Model\BetQuery as ChildBetQuery;
+use Dende\SoccerBot\Model\Match as ChildMatch;
 use Dende\SoccerBot\Model\MatchQuery as ChildMatchQuery;
+use Dende\SoccerBot\Model\PrivateChat as ChildPrivateChat;
+use Dende\SoccerBot\Model\PrivateChatQuery as ChildPrivateChatQuery;
 use Dende\SoccerBot\Model\Team as ChildTeam;
 use Dende\SoccerBot\Model\TeamQuery as ChildTeamQuery;
+use Dende\SoccerBot\Model\Map\BetTableMap;
 use Dende\SoccerBot\Model\Map\MatchTableMap;
+use Dende\SoccerBot\Model\Map\PrivateChatTableMap;
 use Propel\Runtime\Propel;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\ActiveQuery\ModelCriteria;
 use Propel\Runtime\ActiveRecord\ActiveRecordInterface;
 use Propel\Runtime\Collection\Collection;
+use Propel\Runtime\Collection\ObjectCollection;
 use Propel\Runtime\Connection\ConnectionInterface;
 use Propel\Runtime\Exception\BadMethodCallException;
 use Propel\Runtime\Exception\LogicException;
@@ -130,12 +138,36 @@ abstract class Match implements ActiveRecordInterface
     protected $aAwayTeam;
 
     /**
+     * @var        ObjectCollection|ChildPrivateChat[] Collection to store aggregation of ChildPrivateChat objects.
+     */
+    protected $collPrivateChats;
+    protected $collPrivateChatsPartial;
+
+    /**
+     * @var        ObjectCollection|ChildBet[] Collection to store aggregation of ChildBet objects.
+     */
+    protected $collBets;
+    protected $collBetsPartial;
+
+    /**
      * Flag to prevent endless save loop, if this object is referenced
      * by another object which falls in this transaction.
      *
      * @var boolean
      */
     protected $alreadyInSave = false;
+
+    /**
+     * An array of objects scheduled for deletion.
+     * @var ObjectCollection|ChildPrivateChat[]
+     */
+    protected $privateChatsScheduledForDeletion = null;
+
+    /**
+     * An array of objects scheduled for deletion.
+     * @var ObjectCollection|ChildBet[]
+     */
+    protected $betsScheduledForDeletion = null;
 
     /**
      * Initializes internal state of Dende\SoccerBot\Model\Base\Match object.
@@ -759,6 +791,10 @@ abstract class Match implements ActiveRecordInterface
 
             $this->aHomeTeam = null;
             $this->aAwayTeam = null;
+            $this->collPrivateChats = null;
+
+            $this->collBets = null;
+
         } // if (deep)
     }
 
@@ -886,6 +922,41 @@ abstract class Match implements ActiveRecordInterface
                     $affectedRows += $this->doUpdate($con);
                 }
                 $this->resetModified();
+            }
+
+            if ($this->privateChatsScheduledForDeletion !== null) {
+                if (!$this->privateChatsScheduledForDeletion->isEmpty()) {
+                    foreach ($this->privateChatsScheduledForDeletion as $privateChat) {
+                        // need to save related object because we set the relation to null
+                        $privateChat->save($con);
+                    }
+                    $this->privateChatsScheduledForDeletion = null;
+                }
+            }
+
+            if ($this->collPrivateChats !== null) {
+                foreach ($this->collPrivateChats as $referrerFK) {
+                    if (!$referrerFK->isDeleted() && ($referrerFK->isNew() || $referrerFK->isModified())) {
+                        $affectedRows += $referrerFK->save($con);
+                    }
+                }
+            }
+
+            if ($this->betsScheduledForDeletion !== null) {
+                if (!$this->betsScheduledForDeletion->isEmpty()) {
+                    \Dende\SoccerBot\Model\BetQuery::create()
+                        ->filterByPrimaryKeys($this->betsScheduledForDeletion->getPrimaryKeys(false))
+                        ->delete($con);
+                    $this->betsScheduledForDeletion = null;
+                }
+            }
+
+            if ($this->collBets !== null) {
+                foreach ($this->collBets as $referrerFK) {
+                    if (!$referrerFK->isDeleted() && ($referrerFK->isNew() || $referrerFK->isModified())) {
+                        $affectedRows += $referrerFK->save($con);
+                    }
+                }
             }
 
             $this->alreadyInSave = false;
@@ -1137,6 +1208,36 @@ abstract class Match implements ActiveRecordInterface
                 }
 
                 $result[$key] = $this->aAwayTeam->toArray($keyType, $includeLazyLoadColumns,  $alreadyDumpedObjects, true);
+            }
+            if (null !== $this->collPrivateChats) {
+
+                switch ($keyType) {
+                    case TableMap::TYPE_CAMELNAME:
+                        $key = 'privateChats';
+                        break;
+                    case TableMap::TYPE_FIELDNAME:
+                        $key = 'privatechatss';
+                        break;
+                    default:
+                        $key = 'PrivateChats';
+                }
+
+                $result[$key] = $this->collPrivateChats->toArray(null, false, $keyType, $includeLazyLoadColumns, $alreadyDumpedObjects);
+            }
+            if (null !== $this->collBets) {
+
+                switch ($keyType) {
+                    case TableMap::TYPE_CAMELNAME:
+                        $key = 'bets';
+                        break;
+                    case TableMap::TYPE_FIELDNAME:
+                        $key = 'betss';
+                        break;
+                    default:
+                        $key = 'Bets';
+                }
+
+                $result[$key] = $this->collBets->toArray(null, false, $keyType, $includeLazyLoadColumns, $alreadyDumpedObjects);
             }
         }
 
@@ -1404,6 +1505,26 @@ abstract class Match implements ActiveRecordInterface
         $copyObj->setStatus($this->getStatus());
         $copyObj->setDate($this->getDate());
         $copyObj->setUrl($this->getUrl());
+
+        if ($deepCopy) {
+            // important: temporarily setNew(false) because this affects the behavior of
+            // the getter/setter methods for fkey referrer objects.
+            $copyObj->setNew(false);
+
+            foreach ($this->getPrivateChats() as $relObj) {
+                if ($relObj !== $this) {  // ensure that we don't try to copy a reference to ourselves
+                    $copyObj->addPrivateChat($relObj->copy($deepCopy));
+                }
+            }
+
+            foreach ($this->getBets() as $relObj) {
+                if ($relObj !== $this) {  // ensure that we don't try to copy a reference to ourselves
+                    $copyObj->addBet($relObj->copy($deepCopy));
+                }
+            }
+
+        } // if ($deepCopy)
+
         if ($makeNew) {
             $copyObj->setNew(true);
             $copyObj->setId(NULL); // this is a auto-increment column, so set to default value
@@ -1534,6 +1655,500 @@ abstract class Match implements ActiveRecordInterface
         return $this->aAwayTeam;
     }
 
+
+    /**
+     * Initializes a collection based on the name of a relation.
+     * Avoids crafting an 'init[$relationName]s' method name
+     * that wouldn't work when StandardEnglishPluralizer is used.
+     *
+     * @param      string $relationName The name of the relation to initialize
+     * @return void
+     */
+    public function initRelation($relationName)
+    {
+        if ('PrivateChat' == $relationName) {
+            return $this->initPrivateChats();
+        }
+        if ('Bet' == $relationName) {
+            return $this->initBets();
+        }
+    }
+
+    /**
+     * Clears out the collPrivateChats collection
+     *
+     * This does not modify the database; however, it will remove any associated objects, causing
+     * them to be refetched by subsequent calls to accessor method.
+     *
+     * @return void
+     * @see        addPrivateChats()
+     */
+    public function clearPrivateChats()
+    {
+        $this->collPrivateChats = null; // important to set this to NULL since that means it is uninitialized
+    }
+
+    /**
+     * Reset is the collPrivateChats collection loaded partially.
+     */
+    public function resetPartialPrivateChats($v = true)
+    {
+        $this->collPrivateChatsPartial = $v;
+    }
+
+    /**
+     * Initializes the collPrivateChats collection.
+     *
+     * By default this just sets the collPrivateChats collection to an empty array (like clearcollPrivateChats());
+     * however, you may wish to override this method in your stub class to provide setting appropriate
+     * to your application -- for example, setting the initial array to the values stored in database.
+     *
+     * @param      boolean $overrideExisting If set to true, the method call initializes
+     *                                        the collection even if it is not empty
+     *
+     * @return void
+     */
+    public function initPrivateChats($overrideExisting = true)
+    {
+        if (null !== $this->collPrivateChats && !$overrideExisting) {
+            return;
+        }
+
+        $collectionClassName = PrivateChatTableMap::getTableMap()->getCollectionClassName();
+
+        $this->collPrivateChats = new $collectionClassName;
+        $this->collPrivateChats->setModel('\Dende\SoccerBot\Model\PrivateChat');
+    }
+
+    /**
+     * Gets an array of ChildPrivateChat objects which contain a foreign key that references this object.
+     *
+     * If the $criteria is not null, it is used to always fetch the results from the database.
+     * Otherwise the results are fetched from the database the first time, then cached.
+     * Next time the same method is called without $criteria, the cached collection is returned.
+     * If this ChildMatch is new, it will return
+     * an empty collection or the current collection; the criteria is ignored on a new object.
+     *
+     * @param      Criteria $criteria optional Criteria object to narrow the query
+     * @param      ConnectionInterface $con optional connection object
+     * @return ObjectCollection|ChildPrivateChat[] List of ChildPrivateChat objects
+     * @throws PropelException
+     */
+    public function getPrivateChats(Criteria $criteria = null, ConnectionInterface $con = null)
+    {
+        $partial = $this->collPrivateChatsPartial && !$this->isNew();
+        if (null === $this->collPrivateChats || null !== $criteria  || $partial) {
+            if ($this->isNew() && null === $this->collPrivateChats) {
+                // return empty collection
+                $this->initPrivateChats();
+            } else {
+                $collPrivateChats = ChildPrivateChatQuery::create(null, $criteria)
+                    ->filterByCurrentBetMatch($this)
+                    ->find($con);
+
+                if (null !== $criteria) {
+                    if (false !== $this->collPrivateChatsPartial && count($collPrivateChats)) {
+                        $this->initPrivateChats(false);
+
+                        foreach ($collPrivateChats as $obj) {
+                            if (false == $this->collPrivateChats->contains($obj)) {
+                                $this->collPrivateChats->append($obj);
+                            }
+                        }
+
+                        $this->collPrivateChatsPartial = true;
+                    }
+
+                    return $collPrivateChats;
+                }
+
+                if ($partial && $this->collPrivateChats) {
+                    foreach ($this->collPrivateChats as $obj) {
+                        if ($obj->isNew()) {
+                            $collPrivateChats[] = $obj;
+                        }
+                    }
+                }
+
+                $this->collPrivateChats = $collPrivateChats;
+                $this->collPrivateChatsPartial = false;
+            }
+        }
+
+        return $this->collPrivateChats;
+    }
+
+    /**
+     * Sets a collection of ChildPrivateChat objects related by a one-to-many relationship
+     * to the current object.
+     * It will also schedule objects for deletion based on a diff between old objects (aka persisted)
+     * and new objects from the given Propel collection.
+     *
+     * @param      Collection $privateChats A Propel collection.
+     * @param      ConnectionInterface $con Optional connection object
+     * @return $this|ChildMatch The current object (for fluent API support)
+     */
+    public function setPrivateChats(Collection $privateChats, ConnectionInterface $con = null)
+    {
+        /** @var ChildPrivateChat[] $privateChatsToDelete */
+        $privateChatsToDelete = $this->getPrivateChats(new Criteria(), $con)->diff($privateChats);
+
+
+        $this->privateChatsScheduledForDeletion = $privateChatsToDelete;
+
+        foreach ($privateChatsToDelete as $privateChatRemoved) {
+            $privateChatRemoved->setCurrentBetMatch(null);
+        }
+
+        $this->collPrivateChats = null;
+        foreach ($privateChats as $privateChat) {
+            $this->addPrivateChat($privateChat);
+        }
+
+        $this->collPrivateChats = $privateChats;
+        $this->collPrivateChatsPartial = false;
+
+        return $this;
+    }
+
+    /**
+     * Returns the number of related PrivateChat objects.
+     *
+     * @param      Criteria $criteria
+     * @param      boolean $distinct
+     * @param      ConnectionInterface $con
+     * @return int             Count of related PrivateChat objects.
+     * @throws PropelException
+     */
+    public function countPrivateChats(Criteria $criteria = null, $distinct = false, ConnectionInterface $con = null)
+    {
+        $partial = $this->collPrivateChatsPartial && !$this->isNew();
+        if (null === $this->collPrivateChats || null !== $criteria || $partial) {
+            if ($this->isNew() && null === $this->collPrivateChats) {
+                return 0;
+            }
+
+            if ($partial && !$criteria) {
+                return count($this->getPrivateChats());
+            }
+
+            $query = ChildPrivateChatQuery::create(null, $criteria);
+            if ($distinct) {
+                $query->distinct();
+            }
+
+            return $query
+                ->filterByCurrentBetMatch($this)
+                ->count($con);
+        }
+
+        return count($this->collPrivateChats);
+    }
+
+    /**
+     * Method called to associate a ChildPrivateChat object to this object
+     * through the ChildPrivateChat foreign key attribute.
+     *
+     * @param  ChildPrivateChat $l ChildPrivateChat
+     * @return $this|\Dende\SoccerBot\Model\Match The current object (for fluent API support)
+     */
+    public function addPrivateChat(ChildPrivateChat $l)
+    {
+        if ($this->collPrivateChats === null) {
+            $this->initPrivateChats();
+            $this->collPrivateChatsPartial = true;
+        }
+
+        if (!$this->collPrivateChats->contains($l)) {
+            $this->doAddPrivateChat($l);
+
+            if ($this->privateChatsScheduledForDeletion and $this->privateChatsScheduledForDeletion->contains($l)) {
+                $this->privateChatsScheduledForDeletion->remove($this->privateChatsScheduledForDeletion->search($l));
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param ChildPrivateChat $privateChat The ChildPrivateChat object to add.
+     */
+    protected function doAddPrivateChat(ChildPrivateChat $privateChat)
+    {
+        $this->collPrivateChats[]= $privateChat;
+        $privateChat->setCurrentBetMatch($this);
+    }
+
+    /**
+     * @param  ChildPrivateChat $privateChat The ChildPrivateChat object to remove.
+     * @return $this|ChildMatch The current object (for fluent API support)
+     */
+    public function removePrivateChat(ChildPrivateChat $privateChat)
+    {
+        if ($this->getPrivateChats()->contains($privateChat)) {
+            $pos = $this->collPrivateChats->search($privateChat);
+            $this->collPrivateChats->remove($pos);
+            if (null === $this->privateChatsScheduledForDeletion) {
+                $this->privateChatsScheduledForDeletion = clone $this->collPrivateChats;
+                $this->privateChatsScheduledForDeletion->clear();
+            }
+            $this->privateChatsScheduledForDeletion[]= $privateChat;
+            $privateChat->setCurrentBetMatch(null);
+        }
+
+        return $this;
+    }
+
+    /**
+     * Clears out the collBets collection
+     *
+     * This does not modify the database; however, it will remove any associated objects, causing
+     * them to be refetched by subsequent calls to accessor method.
+     *
+     * @return void
+     * @see        addBets()
+     */
+    public function clearBets()
+    {
+        $this->collBets = null; // important to set this to NULL since that means it is uninitialized
+    }
+
+    /**
+     * Reset is the collBets collection loaded partially.
+     */
+    public function resetPartialBets($v = true)
+    {
+        $this->collBetsPartial = $v;
+    }
+
+    /**
+     * Initializes the collBets collection.
+     *
+     * By default this just sets the collBets collection to an empty array (like clearcollBets());
+     * however, you may wish to override this method in your stub class to provide setting appropriate
+     * to your application -- for example, setting the initial array to the values stored in database.
+     *
+     * @param      boolean $overrideExisting If set to true, the method call initializes
+     *                                        the collection even if it is not empty
+     *
+     * @return void
+     */
+    public function initBets($overrideExisting = true)
+    {
+        if (null !== $this->collBets && !$overrideExisting) {
+            return;
+        }
+
+        $collectionClassName = BetTableMap::getTableMap()->getCollectionClassName();
+
+        $this->collBets = new $collectionClassName;
+        $this->collBets->setModel('\Dende\SoccerBot\Model\Bet');
+    }
+
+    /**
+     * Gets an array of ChildBet objects which contain a foreign key that references this object.
+     *
+     * If the $criteria is not null, it is used to always fetch the results from the database.
+     * Otherwise the results are fetched from the database the first time, then cached.
+     * Next time the same method is called without $criteria, the cached collection is returned.
+     * If this ChildMatch is new, it will return
+     * an empty collection or the current collection; the criteria is ignored on a new object.
+     *
+     * @param      Criteria $criteria optional Criteria object to narrow the query
+     * @param      ConnectionInterface $con optional connection object
+     * @return ObjectCollection|ChildBet[] List of ChildBet objects
+     * @throws PropelException
+     */
+    public function getBets(Criteria $criteria = null, ConnectionInterface $con = null)
+    {
+        $partial = $this->collBetsPartial && !$this->isNew();
+        if (null === $this->collBets || null !== $criteria  || $partial) {
+            if ($this->isNew() && null === $this->collBets) {
+                // return empty collection
+                $this->initBets();
+            } else {
+                $collBets = ChildBetQuery::create(null, $criteria)
+                    ->filterByMatch($this)
+                    ->find($con);
+
+                if (null !== $criteria) {
+                    if (false !== $this->collBetsPartial && count($collBets)) {
+                        $this->initBets(false);
+
+                        foreach ($collBets as $obj) {
+                            if (false == $this->collBets->contains($obj)) {
+                                $this->collBets->append($obj);
+                            }
+                        }
+
+                        $this->collBetsPartial = true;
+                    }
+
+                    return $collBets;
+                }
+
+                if ($partial && $this->collBets) {
+                    foreach ($this->collBets as $obj) {
+                        if ($obj->isNew()) {
+                            $collBets[] = $obj;
+                        }
+                    }
+                }
+
+                $this->collBets = $collBets;
+                $this->collBetsPartial = false;
+            }
+        }
+
+        return $this->collBets;
+    }
+
+    /**
+     * Sets a collection of ChildBet objects related by a one-to-many relationship
+     * to the current object.
+     * It will also schedule objects for deletion based on a diff between old objects (aka persisted)
+     * and new objects from the given Propel collection.
+     *
+     * @param      Collection $bets A Propel collection.
+     * @param      ConnectionInterface $con Optional connection object
+     * @return $this|ChildMatch The current object (for fluent API support)
+     */
+    public function setBets(Collection $bets, ConnectionInterface $con = null)
+    {
+        /** @var ChildBet[] $betsToDelete */
+        $betsToDelete = $this->getBets(new Criteria(), $con)->diff($bets);
+
+
+        $this->betsScheduledForDeletion = $betsToDelete;
+
+        foreach ($betsToDelete as $betRemoved) {
+            $betRemoved->setMatch(null);
+        }
+
+        $this->collBets = null;
+        foreach ($bets as $bet) {
+            $this->addBet($bet);
+        }
+
+        $this->collBets = $bets;
+        $this->collBetsPartial = false;
+
+        return $this;
+    }
+
+    /**
+     * Returns the number of related Bet objects.
+     *
+     * @param      Criteria $criteria
+     * @param      boolean $distinct
+     * @param      ConnectionInterface $con
+     * @return int             Count of related Bet objects.
+     * @throws PropelException
+     */
+    public function countBets(Criteria $criteria = null, $distinct = false, ConnectionInterface $con = null)
+    {
+        $partial = $this->collBetsPartial && !$this->isNew();
+        if (null === $this->collBets || null !== $criteria || $partial) {
+            if ($this->isNew() && null === $this->collBets) {
+                return 0;
+            }
+
+            if ($partial && !$criteria) {
+                return count($this->getBets());
+            }
+
+            $query = ChildBetQuery::create(null, $criteria);
+            if ($distinct) {
+                $query->distinct();
+            }
+
+            return $query
+                ->filterByMatch($this)
+                ->count($con);
+        }
+
+        return count($this->collBets);
+    }
+
+    /**
+     * Method called to associate a ChildBet object to this object
+     * through the ChildBet foreign key attribute.
+     *
+     * @param  ChildBet $l ChildBet
+     * @return $this|\Dende\SoccerBot\Model\Match The current object (for fluent API support)
+     */
+    public function addBet(ChildBet $l)
+    {
+        if ($this->collBets === null) {
+            $this->initBets();
+            $this->collBetsPartial = true;
+        }
+
+        if (!$this->collBets->contains($l)) {
+            $this->doAddBet($l);
+
+            if ($this->betsScheduledForDeletion and $this->betsScheduledForDeletion->contains($l)) {
+                $this->betsScheduledForDeletion->remove($this->betsScheduledForDeletion->search($l));
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @param ChildBet $bet The ChildBet object to add.
+     */
+    protected function doAddBet(ChildBet $bet)
+    {
+        $this->collBets[]= $bet;
+        $bet->setMatch($this);
+    }
+
+    /**
+     * @param  ChildBet $bet The ChildBet object to remove.
+     * @return $this|ChildMatch The current object (for fluent API support)
+     */
+    public function removeBet(ChildBet $bet)
+    {
+        if ($this->getBets()->contains($bet)) {
+            $pos = $this->collBets->search($bet);
+            $this->collBets->remove($pos);
+            if (null === $this->betsScheduledForDeletion) {
+                $this->betsScheduledForDeletion = clone $this->collBets;
+                $this->betsScheduledForDeletion->clear();
+            }
+            $this->betsScheduledForDeletion[]= clone $bet;
+            $bet->setMatch(null);
+        }
+
+        return $this;
+    }
+
+
+    /**
+     * If this collection has already been initialized with
+     * an identical criteria, it returns the collection.
+     * Otherwise if this Match is new, it will return
+     * an empty collection; or if this Match has previously
+     * been saved, it will retrieve related Bets from storage.
+     *
+     * This method is protected by default in order to keep the public
+     * api reasonable.  You can provide public methods for those you
+     * actually need in Match.
+     *
+     * @param      Criteria $criteria optional Criteria object to narrow the query
+     * @param      ConnectionInterface $con optional connection object
+     * @param      string $joinBehavior optional join type to use (defaults to Criteria::LEFT_JOIN)
+     * @return ObjectCollection|ChildBet[] List of ChildBet objects
+     */
+    public function getBetsJoinPrivateChat(Criteria $criteria = null, ConnectionInterface $con = null, $joinBehavior = Criteria::LEFT_JOIN)
+    {
+        $query = ChildBetQuery::create(null, $criteria);
+        $query->joinWith('PrivateChat', $joinBehavior);
+
+        return $this->getBets($query, $con);
+    }
+
     /**
      * Clears the current object, sets all attributes to their default values and removes
      * outgoing references as well as back-references (from other objects to this one. Results probably in a database
@@ -1573,8 +2188,20 @@ abstract class Match implements ActiveRecordInterface
     public function clearAllReferences($deep = false)
     {
         if ($deep) {
+            if ($this->collPrivateChats) {
+                foreach ($this->collPrivateChats as $o) {
+                    $o->clearAllReferences($deep);
+                }
+            }
+            if ($this->collBets) {
+                foreach ($this->collBets as $o) {
+                    $o->clearAllReferences($deep);
+                }
+            }
         } // if ($deep)
 
+        $this->collPrivateChats = null;
+        $this->collBets = null;
         $this->aHomeTeam = null;
         $this->aAwayTeam = null;
     }

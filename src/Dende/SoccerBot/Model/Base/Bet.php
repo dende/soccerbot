@@ -4,20 +4,17 @@ namespace Dende\SoccerBot\Model\Base;
 
 use \Exception;
 use \PDO;
-use Dende\SoccerBot\Model\Bet as ChildBet;
 use Dende\SoccerBot\Model\BetQuery as ChildBetQuery;
 use Dende\SoccerBot\Model\Match as ChildMatch;
 use Dende\SoccerBot\Model\MatchQuery as ChildMatchQuery;
 use Dende\SoccerBot\Model\PrivateChat as ChildPrivateChat;
 use Dende\SoccerBot\Model\PrivateChatQuery as ChildPrivateChatQuery;
 use Dende\SoccerBot\Model\Map\BetTableMap;
-use Dende\SoccerBot\Model\Map\PrivateChatTableMap;
 use Propel\Runtime\Propel;
 use Propel\Runtime\ActiveQuery\Criteria;
 use Propel\Runtime\ActiveQuery\ModelCriteria;
 use Propel\Runtime\ActiveRecord\ActiveRecordInterface;
 use Propel\Runtime\Collection\Collection;
-use Propel\Runtime\Collection\ObjectCollection;
 use Propel\Runtime\Connection\ConnectionInterface;
 use Propel\Runtime\Exception\BadMethodCallException;
 use Propel\Runtime\Exception\LogicException;
@@ -26,18 +23,18 @@ use Propel\Runtime\Map\TableMap;
 use Propel\Runtime\Parser\AbstractParser;
 
 /**
- * Base class that represents a row from the 'privatechats' table.
+ * Base class that represents a row from the 'bets' table.
  *
  *
  *
  * @package    propel.generator.Dende.SoccerBot.Model.Base
  */
-abstract class PrivateChat implements ActiveRecordInterface
+abstract class Bet implements ActiveRecordInterface
 {
     /**
      * TableMap class name
      */
-    const TABLE_MAP = '\\Dende\\SoccerBot\\Model\\Map\\PrivateChatTableMap';
+    const TABLE_MAP = '\\Dende\\SoccerBot\\Model\\Map\\BetTableMap';
 
 
     /**
@@ -81,60 +78,35 @@ abstract class PrivateChat implements ActiveRecordInterface
     protected $chat_id;
 
     /**
-     * The value for the username field.
-     *
-     * @var        string
-     */
-    protected $username;
-
-    /**
-     * The value for the type field.
-     *
-     * @var        string
-     */
-    protected $type;
-
-    /**
-     * The value for the liveticker field.
-     *
-     * Note: this column has a database default value of: false
-     * @var        boolean
-     */
-    protected $liveticker;
-
-    /**
-     * The value for the registerstatus field.
-     *
-     * Note: this column has a database default value of: 'unregistered'
-     * @var        string
-     */
-    protected $registerstatus;
-
-    /**
-     * The value for the betstatus field.
-     *
-     * Note: this column has a database default value of: 'inactive'
-     * @var        string
-     */
-    protected $betstatus;
-
-    /**
-     * The value for the current_bet_match_id field.
+     * The value for the match_id field.
      *
      * @var        int
      */
-    protected $current_bet_match_id;
+    protected $match_id;
+
+    /**
+     * The value for the home_team_goals field.
+     *
+     * @var        int
+     */
+    protected $home_team_goals;
+
+    /**
+     * The value for the away_team_goals field.
+     *
+     * @var        int
+     */
+    protected $away_team_goals;
+
+    /**
+     * @var        ChildPrivateChat
+     */
+    protected $aPrivateChat;
 
     /**
      * @var        ChildMatch
      */
-    protected $aCurrentBetMatch;
-
-    /**
-     * @var        ObjectCollection|ChildBet[] Collection to store aggregation of ChildBet objects.
-     */
-    protected $collBets;
-    protected $collBetsPartial;
+    protected $aMatch;
 
     /**
      * Flag to prevent endless save loop, if this object is referenced
@@ -145,31 +117,10 @@ abstract class PrivateChat implements ActiveRecordInterface
     protected $alreadyInSave = false;
 
     /**
-     * An array of objects scheduled for deletion.
-     * @var ObjectCollection|ChildBet[]
-     */
-    protected $betsScheduledForDeletion = null;
-
-    /**
-     * Applies default values to this object.
-     * This method should be called from the object's constructor (or
-     * equivalent initialization method).
-     * @see __construct()
-     */
-    public function applyDefaultValues()
-    {
-        $this->liveticker = false;
-        $this->registerstatus = 'unregistered';
-        $this->betstatus = 'inactive';
-    }
-
-    /**
-     * Initializes internal state of Dende\SoccerBot\Model\Base\PrivateChat object.
-     * @see applyDefaults()
+     * Initializes internal state of Dende\SoccerBot\Model\Base\Bet object.
      */
     public function __construct()
     {
-        $this->applyDefaultValues();
     }
 
     /**
@@ -261,9 +212,9 @@ abstract class PrivateChat implements ActiveRecordInterface
     }
 
     /**
-     * Compares this with another <code>PrivateChat</code> instance.  If
-     * <code>obj</code> is an instance of <code>PrivateChat</code>, delegates to
-     * <code>equals(PrivateChat)</code>.  Otherwise, returns <code>false</code>.
+     * Compares this with another <code>Bet</code> instance.  If
+     * <code>obj</code> is an instance of <code>Bet</code>, delegates to
+     * <code>equals(Bet)</code>.  Otherwise, returns <code>false</code>.
      *
      * @param  mixed   $obj The object to compare to.
      * @return boolean Whether equal to the object specified.
@@ -329,7 +280,7 @@ abstract class PrivateChat implements ActiveRecordInterface
      * @param string $name  The virtual column name
      * @param mixed  $value The value to give to the virtual column
      *
-     * @return $this|PrivateChat The current object, for fluid interface
+     * @return $this|Bet The current object, for fluid interface
      */
     public function setVirtualColumn($name, $value)
     {
@@ -411,80 +362,40 @@ abstract class PrivateChat implements ActiveRecordInterface
     }
 
     /**
-     * Get the [username] column value.
-     *
-     * @return string
-     */
-    public function getUsername()
-    {
-        return $this->username;
-    }
-
-    /**
-     * Get the [type] column value.
-     *
-     * @return string
-     */
-    public function getType()
-    {
-        return $this->type;
-    }
-
-    /**
-     * Get the [liveticker] column value.
-     *
-     * @return boolean
-     */
-    public function getLiveticker()
-    {
-        return $this->liveticker;
-    }
-
-    /**
-     * Get the [liveticker] column value.
-     *
-     * @return boolean
-     */
-    public function isLiveticker()
-    {
-        return $this->getLiveticker();
-    }
-
-    /**
-     * Get the [registerstatus] column value.
-     *
-     * @return string
-     */
-    public function getRegisterstatus()
-    {
-        return $this->registerstatus;
-    }
-
-    /**
-     * Get the [betstatus] column value.
-     *
-     * @return string
-     */
-    public function getBetstatus()
-    {
-        return $this->betstatus;
-    }
-
-    /**
-     * Get the [current_bet_match_id] column value.
+     * Get the [match_id] column value.
      *
      * @return int
      */
-    public function getCurrentBetMatchId()
+    public function getMatchId()
     {
-        return $this->current_bet_match_id;
+        return $this->match_id;
+    }
+
+    /**
+     * Get the [home_team_goals] column value.
+     *
+     * @return int
+     */
+    public function getHomeTeamGoals()
+    {
+        return $this->home_team_goals;
+    }
+
+    /**
+     * Get the [away_team_goals] column value.
+     *
+     * @return int
+     */
+    public function getAwayTeamGoals()
+    {
+        return $this->away_team_goals;
     }
 
     /**
      * Set the value of [id] column.
      *
      * @param int $v new value
-     * @return $this|\Dende\SoccerBot\Model\PrivateChat The current object (for fluent API support)
+     * @return $this|\Dende\SoccerBot\Model\Bet The current object (for fluent API support)
      */
     public function setId($v)
     {
@@ -494,7 +405,7 @@ abstract class PrivateChat implements ActiveRecordInterface
 
         if ($this->id !== $v) {
             $this->id = $v;
-            $this->modifiedColumns[PrivateChatTableMap::COL_ID] = true;
+            $this->modifiedColumns[BetTableMap::COL_ID] = true;
         }
 
         return $this;
@@ -504,7 +415,7 @@ abstract class PrivateChat implements ActiveRecordInterface
      * Set the value of [chat_id] column.
      *
      * @param int $v new value
-     * @return $this|\Dende\SoccerBot\Model\PrivateChat The current object (for fluent API support)
+     * @return $this|\Dende\SoccerBot\Model\Bet The current object (for fluent API support)
      */
     public function setChatId($v)
     {
@@ -514,143 +425,79 @@ abstract class PrivateChat implements ActiveRecordInterface
 
         if ($this->chat_id !== $v) {
             $this->chat_id = $v;
-            $this->modifiedColumns[PrivateChatTableMap::COL_CHAT_ID] = true;
+            $this->modifiedColumns[BetTableMap::COL_CHAT_ID] = true;
+        }
+
+        if ($this->aPrivateChat !== null && $this->aPrivateChat->getId() !== $v) {
+            $this->aPrivateChat = null;
         }
 
         return $this;
     } // setChatId()
 
     /**
-     * Set the value of [username] column.
-     *
-     * @param string $v new value
-     * @return $this|\Dende\SoccerBot\Model\PrivateChat The current object (for fluent API support)
-     */
-    public function setUsername($v)
-    {
-        if ($v !== null) {
-            $v = (string) $v;
-        }
-
-        if ($this->username !== $v) {
-            $this->username = $v;
-            $this->modifiedColumns[PrivateChatTableMap::COL_USERNAME] = true;
-        }
-
-        return $this;
-    } // setUsername()
-
-    /**
-     * Set the value of [type] column.
-     *
-     * @param string $v new value
-     * @return $this|\Dende\SoccerBot\Model\PrivateChat The current object (for fluent API support)
-     */
-    public function setType($v)
-    {
-        if ($v !== null) {
-            $v = (string) $v;
-        }
-
-        if ($this->type !== $v) {
-            $this->type = $v;
-            $this->modifiedColumns[PrivateChatTableMap::COL_TYPE] = true;
-        }
-
-        return $this;
-    } // setType()
-
-    /**
-     * Sets the value of the [liveticker] column.
-     * Non-boolean arguments are converted using the following rules:
-     *   * 1, '1', 'true',  'on',  and 'yes' are converted to boolean true
-     *   * 0, '0', 'false', 'off', and 'no'  are converted to boolean false
-     * Check on string values is case insensitive (so 'FaLsE' is seen as 'false').
-     *
-     * @param  boolean|integer|string $v The new value
-     * @return $this|\Dende\SoccerBot\Model\PrivateChat The current object (for fluent API support)
-     */
-    public function setLiveticker($v)
-    {
-        if ($v !== null) {
-            if (is_string($v)) {
-                $v = in_array(strtolower($v), array('false', 'off', '-', 'no', 'n', '0', '')) ? false : true;
-            } else {
-                $v = (boolean) $v;
-            }
-        }
-
-        if ($this->liveticker !== $v) {
-            $this->liveticker = $v;
-            $this->modifiedColumns[PrivateChatTableMap::COL_LIVETICKER] = true;
-        }
-
-        return $this;
-    } // setLiveticker()
-
-    /**
-     * Set the value of [registerstatus] column.
-     *
-     * @param string $v new value
-     * @return $this|\Dende\SoccerBot\Model\PrivateChat The current object (for fluent API support)
-     */
-    public function setRegisterstatus($v)
-    {
-        if ($v !== null) {
-            $v = (string) $v;
-        }
-
-        if ($this->registerstatus !== $v) {
-            $this->registerstatus = $v;
-            $this->modifiedColumns[PrivateChatTableMap::COL_REGISTERSTATUS] = true;
-        }
-
-        return $this;
-    } // setRegisterstatus()
-
-    /**
-     * Set the value of [betstatus] column.
-     *
-     * @param string $v new value
-     * @return $this|\Dende\SoccerBot\Model\PrivateChat The current object (for fluent API support)
-     */
-    public function setBetstatus($v)
-    {
-        if ($v !== null) {
-            $v = (string) $v;
-        }
-
-        if ($this->betstatus !== $v) {
-            $this->betstatus = $v;
-            $this->modifiedColumns[PrivateChatTableMap::COL_BETSTATUS] = true;
-        }
-
-        return $this;
-    } // setBetstatus()
-
-    /**
-     * Set the value of [current_bet_match_id] column.
+     * Set the value of [match_id] column.
      *
      * @param int $v new value
-     * @return $this|\Dende\SoccerBot\Model\PrivateChat The current object (for fluent API support)
+     * @return $this|\Dende\SoccerBot\Model\Bet The current object (for fluent API support)
      */
-    public function setCurrentBetMatchId($v)
+    public function setMatchId($v)
     {
         if ($v !== null) {
             $v = (int) $v;
         }
 
-        if ($this->current_bet_match_id !== $v) {
-            $this->current_bet_match_id = $v;
-            $this->modifiedColumns[PrivateChatTableMap::COL_CURRENT_BET_MATCH_ID] = true;
+        if ($this->match_id !== $v) {
+            $this->match_id = $v;
+            $this->modifiedColumns[BetTableMap::COL_MATCH_ID] = true;
         }
 
-        if ($this->aCurrentBetMatch !== null && $this->aCurrentBetMatch->getId() !== $v) {
-            $this->aCurrentBetMatch = null;
+        if ($this->aMatch !== null && $this->aMatch->getId() !== $v) {
+            $this->aMatch = null;
         }
 
         return $this;
-    } // setCurrentBetMatchId()
+    } // setMatchId()
+
+    /**
+     * Set the value of [home_team_goals] column.
+     *
+     * @param int $v new value
+     * @return $this|\Dende\SoccerBot\Model\Bet The current object (for fluent API support)
+     */
+    public function setHomeTeamGoals($v)
+    {
+        if ($v !== null) {
+            $v = (int) $v;
+        }
+
+        if ($this->home_team_goals !== $v) {
+            $this->home_team_goals = $v;
+            $this->modifiedColumns[BetTableMap::COL_HOME_TEAM_GOALS] = true;
+        }
+
+        return $this;
+    } // setHomeTeamGoals()
+
+    /**
+     * Set the value of [away_team_goals] column.
+     *
+     * @param int $v new value
+     * @return $this|\Dende\SoccerBot\Model\Bet The current object (for fluent API support)
+     */
+    public function setAwayTeamGoals($v)
+    {
+        if ($v !== null) {
+            $v = (int) $v;
+        }
+
+        if ($this->away_team_goals !== $v) {
+            $this->away_team_goals = $v;
+            $this->modifiedColumns[BetTableMap::COL_AWAY_TEAM_GOALS] = true;
+        }
+
+        return $this;
+    } // setAwayTeamGoals()
 
     /**
      * Indicates whether the columns in this object are only set to default values.
@@ -662,18 +509,6 @@ abstract class PrivateChat implements ActiveRecordInterface
      */
     public function hasOnlyDefaultValues()
     {
-            if ($this->liveticker !== false) {
-                return false;
-            }
-
-            if ($this->registerstatus !== 'unregistered') {
-                return false;
-            }
-
-            if ($this->betstatus !== 'inactive') {
-                return false;
-            }
-
         // otherwise, everything was equal, so return TRUE
         return true;
     } // hasOnlyDefaultValues()
@@ -700,29 +535,20 @@ abstract class PrivateChat implements ActiveRecordInterface
     {
         try {
 
-            $col = $row[TableMap::TYPE_NUM == $indexType ? 0 + $startcol : PrivateChatTableMap::translateFieldName('Id', TableMap::TYPE_PHPNAME, $indexType)];
+            $col = $row[TableMap::TYPE_NUM == $indexType ? 0 + $startcol : BetTableMap::translateFieldName('Id', TableMap::TYPE_PHPNAME, $indexType)];
             $this->id = (null !== $col) ? (int) $col : null;
 
-            $col = $row[TableMap::TYPE_NUM == $indexType ? 1 + $startcol : PrivateChatTableMap::translateFieldName('ChatId', TableMap::TYPE_PHPNAME, $indexType)];
+            $col = $row[TableMap::TYPE_NUM == $indexType ? 1 + $startcol : BetTableMap::translateFieldName('ChatId', TableMap::TYPE_PHPNAME, $indexType)];
             $this->chat_id = (null !== $col) ? (int) $col : null;
 
-            $col = $row[TableMap::TYPE_NUM == $indexType ? 2 + $startcol : PrivateChatTableMap::translateFieldName('Username', TableMap::TYPE_PHPNAME, $indexType)];
-            $this->username = (null !== $col) ? (string) $col : null;
+            $col = $row[TableMap::TYPE_NUM == $indexType ? 2 + $startcol : BetTableMap::translateFieldName('MatchId', TableMap::TYPE_PHPNAME, $indexType)];
+            $this->match_id = (null !== $col) ? (int) $col : null;
 
-            $col = $row[TableMap::TYPE_NUM == $indexType ? 3 + $startcol : PrivateChatTableMap::translateFieldName('Type', TableMap::TYPE_PHPNAME, $indexType)];
-            $this->type = (null !== $col) ? (string) $col : null;
+            $col = $row[TableMap::TYPE_NUM == $indexType ? 3 + $startcol : BetTableMap::translateFieldName('HomeTeamGoals', TableMap::TYPE_PHPNAME, $indexType)];
+            $this->home_team_goals = (null !== $col) ? (int) $col : null;
 
-            $col = $row[TableMap::TYPE_NUM == $indexType ? 4 + $startcol : PrivateChatTableMap::translateFieldName('Liveticker', TableMap::TYPE_PHPNAME, $indexType)];
-            $this->liveticker = (null !== $col) ? (boolean) $col : null;
-
-            $col = $row[TableMap::TYPE_NUM == $indexType ? 5 + $startcol : PrivateChatTableMap::translateFieldName('Registerstatus', TableMap::TYPE_PHPNAME, $indexType)];
-            $this->registerstatus = (null !== $col) ? (string) $col : null;
-
-            $col = $row[TableMap::TYPE_NUM == $indexType ? 6 + $startcol : PrivateChatTableMap::translateFieldName('Betstatus', TableMap::TYPE_PHPNAME, $indexType)];
-            $this->betstatus = (null !== $col) ? (string) $col : null;
-
-            $col = $row[TableMap::TYPE_NUM == $indexType ? 7 + $startcol : PrivateChatTableMap::translateFieldName('CurrentBetMatchId', TableMap::TYPE_PHPNAME, $indexType)];
-            $this->current_bet_match_id = (null !== $col) ? (int) $col : null;
+            $col = $row[TableMap::TYPE_NUM == $indexType ? 4 + $startcol : BetTableMap::translateFieldName('AwayTeamGoals', TableMap::TYPE_PHPNAME, $indexType)];
+            $this->away_team_goals = (null !== $col) ? (int) $col : null;
             $this->resetModified();
 
             $this->setNew(false);
@@ -731,10 +557,10 @@ abstract class PrivateChat implements ActiveRecordInterface
                 $this->ensureConsistency();
             }
 
-            return $startcol + 8; // 8 = PrivateChatTableMap::NUM_HYDRATE_COLUMNS.
+            return $startcol + 5; // 5 = BetTableMap::NUM_HYDRATE_COLUMNS.
 
         } catch (Exception $e) {
-            throw new PropelException(sprintf('Error populating %s object', '\\Dende\\SoccerBot\\Model\\PrivateChat'), 0, $e);
+            throw new PropelException(sprintf('Error populating %s object', '\\Dende\\SoccerBot\\Model\\Bet'), 0, $e);
         }
     }
 
@@ -753,8 +579,11 @@ abstract class PrivateChat implements ActiveRecordInterface
      */
     public function ensureConsistency()
     {
-        if ($this->aCurrentBetMatch !== null && $this->current_bet_match_id !== $this->aCurrentBetMatch->getId()) {
-            $this->aCurrentBetMatch = null;
+        if ($this->aPrivateChat !== null && $this->chat_id !== $this->aPrivateChat->getId()) {
+            $this->aPrivateChat = null;
+        }
+        if ($this->aMatch !== null && $this->match_id !== $this->aMatch->getId()) {
+            $this->aMatch = null;
         }
     } // ensureConsistency
 
@@ -779,13 +608,13 @@ abstract class PrivateChat implements ActiveRecordInterface
         }
 
         if ($con === null) {
-            $con = Propel::getServiceContainer()->getReadConnection(PrivateChatTableMap::DATABASE_NAME);
+            $con = Propel::getServiceContainer()->getReadConnection(BetTableMap::DATABASE_NAME);
         }
 
         // We don't need to alter the object instance pool; we're just modifying this instance
         // already in the pool.
 
-        $dataFetcher = ChildPrivateChatQuery::create(null, $this->buildPkeyCriteria())->setFormatter(ModelCriteria::FORMAT_STATEMENT)->find($con);
+        $dataFetcher = ChildBetQuery::create(null, $this->buildPkeyCriteria())->setFormatter(ModelCriteria::FORMAT_STATEMENT)->find($con);
         $row = $dataFetcher->fetch();
         $dataFetcher->close();
         if (!$row) {
@@ -795,9 +624,8 @@ abstract class PrivateChat implements ActiveRecordInterface
 
         if ($deep) {  // also de-associate any related objects?
 
-            $this->aCurrentBetMatch = null;
-            $this->collBets = null;
-
+            $this->aPrivateChat = null;
+            $this->aMatch = null;
         } // if (deep)
     }
 
@@ -807,8 +635,8 @@ abstract class PrivateChat implements ActiveRecordInterface
      * @param      ConnectionInterface $con
      * @return void
      * @throws PropelException
-     * @see PrivateChat::setDeleted()
-     * @see PrivateChat::isDeleted()
+     * @see Bet::setDeleted()
+     * @see Bet::isDeleted()
      */
     public function delete(ConnectionInterface $con = null)
     {
@@ -817,11 +645,11 @@ abstract class PrivateChat implements ActiveRecordInterface
         }
 
         if ($con === null) {
-            $con = Propel::getServiceContainer()->getWriteConnection(PrivateChatTableMap::DATABASE_NAME);
+            $con = Propel::getServiceContainer()->getWriteConnection(BetTableMap::DATABASE_NAME);
         }
 
         $con->transaction(function () use ($con) {
-            $deleteQuery = ChildPrivateChatQuery::create()
+            $deleteQuery = ChildBetQuery::create()
                 ->filterByPrimaryKey($this->getPrimaryKey());
             $ret = $this->preDelete($con);
             if ($ret) {
@@ -852,7 +680,7 @@ abstract class PrivateChat implements ActiveRecordInterface
         }
 
         if ($con === null) {
-            $con = Propel::getServiceContainer()->getWriteConnection(PrivateChatTableMap::DATABASE_NAME);
+            $con = Propel::getServiceContainer()->getWriteConnection(BetTableMap::DATABASE_NAME);
         }
 
         return $con->transaction(function () use ($con) {
@@ -871,7 +699,7 @@ abstract class PrivateChat implements ActiveRecordInterface
                     $this->postUpdate($con);
                 }
                 $this->postSave($con);
-                PrivateChatTableMap::addInstanceToPool($this);
+                BetTableMap::addInstanceToPool($this);
             } else {
                 $affectedRows = 0;
             }
@@ -902,11 +730,18 @@ abstract class PrivateChat implements ActiveRecordInterface
             // method.  This object relates to these object(s) by a
             // foreign key reference.
 
-            if ($this->aCurrentBetMatch !== null) {
-                if ($this->aCurrentBetMatch->isModified() || $this->aCurrentBetMatch->isNew()) {
-                    $affectedRows += $this->aCurrentBetMatch->save($con);
+            if ($this->aPrivateChat !== null) {
+                if ($this->aPrivateChat->isModified() || $this->aPrivateChat->isNew()) {
+                    $affectedRows += $this->aPrivateChat->save($con);
                 }
-                $this->setCurrentBetMatch($this->aCurrentBetMatch);
+                $this->setPrivateChat($this->aPrivateChat);
+            }
+
+            if ($this->aMatch !== null) {
+                if ($this->aMatch->isModified() || $this->aMatch->isNew()) {
+                    $affectedRows += $this->aMatch->save($con);
+                }
+                $this->setMatch($this->aMatch);
             }
 
             if ($this->isNew() || $this->isModified()) {
@@ -918,23 +753,6 @@ abstract class PrivateChat implements ActiveRecordInterface
                     $affectedRows += $this->doUpdate($con);
                 }
                 $this->resetModified();
-            }
-
-            if ($this->betsScheduledForDeletion !== null) {
-                if (!$this->betsScheduledForDeletion->isEmpty()) {
-                    \Dende\SoccerBot\Model\BetQuery::create()
-                        ->filterByPrimaryKeys($this->betsScheduledForDeletion->getPrimaryKeys(false))
-                        ->delete($con);
-                    $this->betsScheduledForDeletion = null;
-                }
-            }
-
-            if ($this->collBets !== null) {
-                foreach ($this->collBets as $referrerFK) {
-                    if (!$referrerFK->isDeleted() && ($referrerFK->isNew() || $referrerFK->isModified())) {
-                        $affectedRows += $referrerFK->save($con);
-                    }
-                }
             }
 
             $this->alreadyInSave = false;
@@ -957,39 +775,30 @@ abstract class PrivateChat implements ActiveRecordInterface
         $modifiedColumns = array();
         $index = 0;
 
-        $this->modifiedColumns[PrivateChatTableMap::COL_ID] = true;
+        $this->modifiedColumns[BetTableMap::COL_ID] = true;
         if (null !== $this->id) {
-            throw new PropelException('Cannot insert a value for auto-increment primary key (' . PrivateChatTableMap::COL_ID . ')');
+            throw new PropelException('Cannot insert a value for auto-increment primary key (' . BetTableMap::COL_ID . ')');
         }
 
          // check the columns in natural order for more readable SQL queries
-        if ($this->isColumnModified(PrivateChatTableMap::COL_ID)) {
+        if ($this->isColumnModified(BetTableMap::COL_ID)) {
             $modifiedColumns[':p' . $index++]  = 'id';
         }
-        if ($this->isColumnModified(PrivateChatTableMap::COL_CHAT_ID)) {
+        if ($this->isColumnModified(BetTableMap::COL_CHAT_ID)) {
             $modifiedColumns[':p' . $index++]  = 'chat_id';
         }
-        if ($this->isColumnModified(PrivateChatTableMap::COL_USERNAME)) {
-            $modifiedColumns[':p' . $index++]  = 'username';
+        if ($this->isColumnModified(BetTableMap::COL_MATCH_ID)) {
+            $modifiedColumns[':p' . $index++]  = 'match_id';
         }
-        if ($this->isColumnModified(PrivateChatTableMap::COL_TYPE)) {
-            $modifiedColumns[':p' . $index++]  = 'type';
+        if ($this->isColumnModified(BetTableMap::COL_HOME_TEAM_GOALS)) {
+            $modifiedColumns[':p' . $index++]  = 'home_team_goals';
         }
-        if ($this->isColumnModified(PrivateChatTableMap::COL_LIVETICKER)) {
-            $modifiedColumns[':p' . $index++]  = 'liveticker';
-        }
-        if ($this->isColumnModified(PrivateChatTableMap::COL_REGISTERSTATUS)) {
-            $modifiedColumns[':p' . $index++]  = 'registerstatus';
-        }
-        if ($this->isColumnModified(PrivateChatTableMap::COL_BETSTATUS)) {
-            $modifiedColumns[':p' . $index++]  = 'betstatus';
-        }
-        if ($this->isColumnModified(PrivateChatTableMap::COL_CURRENT_BET_MATCH_ID)) {
-            $modifiedColumns[':p' . $index++]  = 'current_bet_match_id';
+        if ($this->isColumnModified(BetTableMap::COL_AWAY_TEAM_GOALS)) {
+            $modifiedColumns[':p' . $index++]  = 'away_team_goals';
         }
 
         $sql = sprintf(
-            'INSERT INTO privatechats (%s) VALUES (%s)',
+            'INSERT INTO bets (%s) VALUES (%s)',
             implode(', ', $modifiedColumns),
             implode(', ', array_keys($modifiedColumns))
         );
@@ -1004,23 +813,14 @@ abstract class PrivateChat implements ActiveRecordInterface
                     case 'chat_id':
                         $stmt->bindValue($identifier, $this->chat_id, PDO::PARAM_INT);
                         break;
-                    case 'username':
-                        $stmt->bindValue($identifier, $this->username, PDO::PARAM_STR);
+                    case 'match_id':
+                        $stmt->bindValue($identifier, $this->match_id, PDO::PARAM_INT);
                         break;
-                    case 'type':
-                        $stmt->bindValue($identifier, $this->type, PDO::PARAM_STR);
+                    case 'home_team_goals':
+                        $stmt->bindValue($identifier, $this->home_team_goals, PDO::PARAM_INT);
                         break;
-                    case 'liveticker':
-                        $stmt->bindValue($identifier, (int) $this->liveticker, PDO::PARAM_INT);
-                        break;
-                    case 'registerstatus':
-                        $stmt->bindValue($identifier, $this->registerstatus, PDO::PARAM_STR);
-                        break;
-                    case 'betstatus':
-                        $stmt->bindValue($identifier, $this->betstatus, PDO::PARAM_STR);
-                        break;
-                    case 'current_bet_match_id':
-                        $stmt->bindValue($identifier, $this->current_bet_match_id, PDO::PARAM_INT);
+                    case 'away_team_goals':
+                        $stmt->bindValue($identifier, $this->away_team_goals, PDO::PARAM_INT);
                         break;
                 }
             }
@@ -1068,7 +868,7 @@ abstract class PrivateChat implements ActiveRecordInterface
      */
     public function getByName($name, $type = TableMap::TYPE_PHPNAME)
     {
-        $pos = PrivateChatTableMap::translateFieldName($name, $type, TableMap::TYPE_NUM);
+        $pos = BetTableMap::translateFieldName($name, $type, TableMap::TYPE_NUM);
         $field = $this->getByPosition($pos);
 
         return $field;
@@ -1091,22 +891,13 @@ abstract class PrivateChat implements ActiveRecordInterface
                 return $this->getChatId();
                 break;
             case 2:
-                return $this->getUsername();
+                return $this->getMatchId();
                 break;
             case 3:
-                return $this->getType();
+                return $this->getHomeTeamGoals();
                 break;
             case 4:
-                return $this->getLiveticker();
-                break;
-            case 5:
-                return $this->getRegisterstatus();
-                break;
-            case 6:
-                return $this->getBetstatus();
-                break;
-            case 7:
-                return $this->getCurrentBetMatchId();
+                return $this->getAwayTeamGoals();
                 break;
             default:
                 return null;
@@ -1132,20 +923,17 @@ abstract class PrivateChat implements ActiveRecordInterface
     public function toArray($keyType = TableMap::TYPE_PHPNAME, $includeLazyLoadColumns = true, $alreadyDumpedObjects = array(), $includeForeignObjects = false)
     {
 
-        if (isset($alreadyDumpedObjects['PrivateChat'][$this->hashCode()])) {
+        if (isset($alreadyDumpedObjects['Bet'][$this->hashCode()])) {
             return '*RECURSION*';
         }
-        $alreadyDumpedObjects['PrivateChat'][$this->hashCode()] = true;
-        $keys = PrivateChatTableMap::getFieldNames($keyType);
+        $alreadyDumpedObjects['Bet'][$this->hashCode()] = true;
+        $keys = BetTableMap::getFieldNames($keyType);
         $result = array(
             $keys[0] => $this->getId(),
             $keys[1] => $this->getChatId(),
-            $keys[2] => $this->getUsername(),
-            $keys[3] => $this->getType(),
-            $keys[4] => $this->getLiveticker(),
-            $keys[5] => $this->getRegisterstatus(),
-            $keys[6] => $this->getBetstatus(),
-            $keys[7] => $this->getCurrentBetMatchId(),
+            $keys[2] => $this->getMatchId(),
+            $keys[3] => $this->getHomeTeamGoals(),
+            $keys[4] => $this->getAwayTeamGoals(),
         );
         $virtualColumns = $this->virtualColumns;
         foreach ($virtualColumns as $key => $virtualColumn) {
@@ -1153,7 +941,22 @@ abstract class PrivateChat implements ActiveRecordInterface
         }
 
         if ($includeForeignObjects) {
-            if (null !== $this->aCurrentBetMatch) {
+            if (null !== $this->aPrivateChat) {
+
+                switch ($keyType) {
+                    case TableMap::TYPE_CAMELNAME:
+                        $key = 'privateChat';
+                        break;
+                    case TableMap::TYPE_FIELDNAME:
+                        $key = 'privatechats';
+                        break;
+                    default:
+                        $key = 'PrivateChat';
+                }
+
+                $result[$key] = $this->aPrivateChat->toArray($keyType, $includeLazyLoadColumns,  $alreadyDumpedObjects, true);
+            }
+            if (null !== $this->aMatch) {
 
                 switch ($keyType) {
                     case TableMap::TYPE_CAMELNAME:
@@ -1163,25 +966,10 @@ abstract class PrivateChat implements ActiveRecordInterface
                         $key = 'matches';
                         break;
                     default:
-                        $key = 'CurrentBetMatch';
+                        $key = 'Match';
                 }
 
-                $result[$key] = $this->aCurrentBetMatch->toArray($keyType, $includeLazyLoadColumns,  $alreadyDumpedObjects, true);
-            }
-            if (null !== $this->collBets) {
-
-                switch ($keyType) {
-                    case TableMap::TYPE_CAMELNAME:
-                        $key = 'bets';
-                        break;
-                    case TableMap::TYPE_FIELDNAME:
-                        $key = 'betss';
-                        break;
-                    default:
-                        $key = 'Bets';
-                }
-
-                $result[$key] = $this->collBets->toArray(null, false, $keyType, $includeLazyLoadColumns, $alreadyDumpedObjects);
+                $result[$key] = $this->aMatch->toArray($keyType, $includeLazyLoadColumns,  $alreadyDumpedObjects, true);
             }
         }
 
@@ -1197,11 +985,11 @@ abstract class PrivateChat implements ActiveRecordInterface
      *                one of the class type constants TableMap::TYPE_PHPNAME, TableMap::TYPE_CAMELNAME
      *                TableMap::TYPE_COLNAME, TableMap::TYPE_FIELDNAME, TableMap::TYPE_NUM.
      *                Defaults to TableMap::TYPE_PHPNAME.
-     * @return $this|\Dende\SoccerBot\Model\PrivateChat
+     * @return $this|\Dende\SoccerBot\Model\Bet
      */
     public function setByName($name, $value, $type = TableMap::TYPE_PHPNAME)
     {
-        $pos = PrivateChatTableMap::translateFieldName($name, $type, TableMap::TYPE_NUM);
+        $pos = BetTableMap::translateFieldName($name, $type, TableMap::TYPE_NUM);
 
         return $this->setByPosition($pos, $value);
     }
@@ -1212,7 +1000,7 @@ abstract class PrivateChat implements ActiveRecordInterface
      *
      * @param  int $pos position in xml schema
      * @param  mixed $value field value
-     * @return $this|\Dende\SoccerBot\Model\PrivateChat
+     * @return $this|\Dende\SoccerBot\Model\Bet
      */
     public function setByPosition($pos, $value)
     {
@@ -1224,22 +1012,13 @@ abstract class PrivateChat implements ActiveRecordInterface
                 $this->setChatId($value);
                 break;
             case 2:
-                $this->setUsername($value);
+                $this->setMatchId($value);
                 break;
             case 3:
-                $this->setType($value);
+                $this->setHomeTeamGoals($value);
                 break;
             case 4:
-                $this->setLiveticker($value);
-                break;
-            case 5:
-                $this->setRegisterstatus($value);
-                break;
-            case 6:
-                $this->setBetstatus($value);
-                break;
-            case 7:
-                $this->setCurrentBetMatchId($value);
+                $this->setAwayTeamGoals($value);
                 break;
         } // switch()
 
@@ -1265,7 +1044,7 @@ abstract class PrivateChat implements ActiveRecordInterface
      */
     public function fromArray($arr, $keyType = TableMap::TYPE_PHPNAME)
     {
-        $keys = PrivateChatTableMap::getFieldNames($keyType);
+        $keys = BetTableMap::getFieldNames($keyType);
 
         if (array_key_exists($keys[0], $arr)) {
             $this->setId($arr[$keys[0]]);
@@ -1274,22 +1053,13 @@ abstract class PrivateChat implements ActiveRecordInterface
             $this->setChatId($arr[$keys[1]]);
         }
         if (array_key_exists($keys[2], $arr)) {
-            $this->setUsername($arr[$keys[2]]);
+            $this->setMatchId($arr[$keys[2]]);
         }
         if (array_key_exists($keys[3], $arr)) {
-            $this->setType($arr[$keys[3]]);
+            $this->setHomeTeamGoals($arr[$keys[3]]);
         }
         if (array_key_exists($keys[4], $arr)) {
-            $this->setLiveticker($arr[$keys[4]]);
-        }
-        if (array_key_exists($keys[5], $arr)) {
-            $this->setRegisterstatus($arr[$keys[5]]);
-        }
-        if (array_key_exists($keys[6], $arr)) {
-            $this->setBetstatus($arr[$keys[6]]);
-        }
-        if (array_key_exists($keys[7], $arr)) {
-            $this->setCurrentBetMatchId($arr[$keys[7]]);
+            $this->setAwayTeamGoals($arr[$keys[4]]);
         }
     }
 
@@ -1310,7 +1080,7 @@ abstract class PrivateChat implements ActiveRecordInterface
      * @param string $data The source data to import from
      * @param string $keyType The type of keys the array uses.
      *
-     * @return $this|\Dende\SoccerBot\Model\PrivateChat The current object, for fluid interface
+     * @return $this|\Dende\SoccerBot\Model\Bet The current object, for fluid interface
      */
     public function importFrom($parser, $data, $keyType = TableMap::TYPE_PHPNAME)
     {
@@ -1330,31 +1100,22 @@ abstract class PrivateChat implements ActiveRecordInterface
      */
     public function buildCriteria()
     {
-        $criteria = new Criteria(PrivateChatTableMap::DATABASE_NAME);
+        $criteria = new Criteria(BetTableMap::DATABASE_NAME);
 
-        if ($this->isColumnModified(PrivateChatTableMap::COL_ID)) {
-            $criteria->add(PrivateChatTableMap::COL_ID, $this->id);
+        if ($this->isColumnModified(BetTableMap::COL_ID)) {
+            $criteria->add(BetTableMap::COL_ID, $this->id);
         }
-        if ($this->isColumnModified(PrivateChatTableMap::COL_CHAT_ID)) {
-            $criteria->add(PrivateChatTableMap::COL_CHAT_ID, $this->chat_id);
+        if ($this->isColumnModified(BetTableMap::COL_CHAT_ID)) {
+            $criteria->add(BetTableMap::COL_CHAT_ID, $this->chat_id);
         }
-        if ($this->isColumnModified(PrivateChatTableMap::COL_USERNAME)) {
-            $criteria->add(PrivateChatTableMap::COL_USERNAME, $this->username);
+        if ($this->isColumnModified(BetTableMap::COL_MATCH_ID)) {
+            $criteria->add(BetTableMap::COL_MATCH_ID, $this->match_id);
         }
-        if ($this->isColumnModified(PrivateChatTableMap::COL_TYPE)) {
-            $criteria->add(PrivateChatTableMap::COL_TYPE, $this->type);
+        if ($this->isColumnModified(BetTableMap::COL_HOME_TEAM_GOALS)) {
+            $criteria->add(BetTableMap::COL_HOME_TEAM_GOALS, $this->home_team_goals);
         }
-        if ($this->isColumnModified(PrivateChatTableMap::COL_LIVETICKER)) {
-            $criteria->add(PrivateChatTableMap::COL_LIVETICKER, $this->liveticker);
-        }
-        if ($this->isColumnModified(PrivateChatTableMap::COL_REGISTERSTATUS)) {
-            $criteria->add(PrivateChatTableMap::COL_REGISTERSTATUS, $this->registerstatus);
-        }
-        if ($this->isColumnModified(PrivateChatTableMap::COL_BETSTATUS)) {
-            $criteria->add(PrivateChatTableMap::COL_BETSTATUS, $this->betstatus);
-        }
-        if ($this->isColumnModified(PrivateChatTableMap::COL_CURRENT_BET_MATCH_ID)) {
-            $criteria->add(PrivateChatTableMap::COL_CURRENT_BET_MATCH_ID, $this->current_bet_match_id);
+        if ($this->isColumnModified(BetTableMap::COL_AWAY_TEAM_GOALS)) {
+            $criteria->add(BetTableMap::COL_AWAY_TEAM_GOALS, $this->away_team_goals);
         }
 
         return $criteria;
@@ -1372,8 +1133,8 @@ abstract class PrivateChat implements ActiveRecordInterface
      */
     public function buildPkeyCriteria()
     {
-        $criteria = ChildPrivateChatQuery::create();
-        $criteria->add(PrivateChatTableMap::COL_ID, $this->id);
+        $criteria = ChildBetQuery::create();
+        $criteria->add(BetTableMap::COL_ID, $this->id);
 
         return $criteria;
     }
@@ -1435,7 +1196,7 @@ abstract class PrivateChat implements ActiveRecordInterface
      * If desired, this method can also make copies of all associated (fkey referrers)
      * objects.
      *
-     * @param      object $copyObj An object of \Dende\SoccerBot\Model\PrivateChat (or compatible) type.
+     * @param      object $copyObj An object of \Dende\SoccerBot\Model\Bet (or compatible) type.
      * @param      boolean $deepCopy Whether to also copy all rows that refer (by fkey) to the current row.
      * @param      boolean $makeNew Whether to reset autoincrement PKs and make the object new.
      * @throws PropelException
@@ -1443,26 +1204,9 @@ abstract class PrivateChat implements ActiveRecordInterface
     public function copyInto($copyObj, $deepCopy = false, $makeNew = true)
     {
         $copyObj->setChatId($this->getChatId());
-        $copyObj->setUsername($this->getUsername());
-        $copyObj->setType($this->getType());
-        $copyObj->setLiveticker($this->getLiveticker());
-        $copyObj->setRegisterstatus($this->getRegisterstatus());
-        $copyObj->setBetstatus($this->getBetstatus());
-        $copyObj->setCurrentBetMatchId($this->getCurrentBetMatchId());
-
-        if ($deepCopy) {
-            // important: temporarily setNew(false) because this affects the behavior of
-            // the getter/setter methods for fkey referrer objects.
-            $copyObj->setNew(false);
-
-            foreach ($this->getBets() as $relObj) {
-                if ($relObj !== $this) {  // ensure that we don't try to copy a reference to ourselves
-                    $copyObj->addBet($relObj->copy($deepCopy));
-                }
-            }
-
-        } // if ($deepCopy)
-
+        $copyObj->setMatchId($this->getMatchId());
+        $copyObj->setHomeTeamGoals($this->getHomeTeamGoals());
+        $copyObj->setAwayTeamGoals($this->getAwayTeamGoals());
         if ($makeNew) {
             $copyObj->setNew(true);
             $copyObj->setId(NULL); // this is a auto-increment column, so set to default value
@@ -1478,7 +1222,7 @@ abstract class PrivateChat implements ActiveRecordInterface
      * objects.
      *
      * @param  boolean $deepCopy Whether to also copy all rows that refer (by fkey) to the current row.
-     * @return \Dende\SoccerBot\Model\PrivateChat Clone of current object.
+     * @return \Dende\SoccerBot\Model\Bet Clone of current object.
      * @throws PropelException
      */
     public function copy($deepCopy = false)
@@ -1492,26 +1236,77 @@ abstract class PrivateChat implements ActiveRecordInterface
     }
 
     /**
+     * Declares an association between this object and a ChildPrivateChat object.
+     *
+     * @param  ChildPrivateChat $v
+     * @return $this|\Dende\SoccerBot\Model\Bet The current object (for fluent API support)
+     * @throws PropelException
+     */
+    public function setPrivateChat(ChildPrivateChat $v = null)
+    {
+        if ($v === null) {
+            $this->setChatId(NULL);
+        } else {
+            $this->setChatId($v->getId());
+        }
+
+        $this->aPrivateChat = $v;
+
+        // Add binding for other direction of this n:n relationship.
+        // If this object has already been added to the ChildPrivateChat object, it will not be re-added.
+        if ($v !== null) {
+            $v->addBet($this);
+        }
+
+
+        return $this;
+    }
+
+
+    /**
+     * Get the associated ChildPrivateChat object
+     *
+     * @param  ConnectionInterface $con Optional Connection object.
+     * @return ChildPrivateChat The associated ChildPrivateChat object.
+     * @throws PropelException
+     */
+    public function getPrivateChat(ConnectionInterface $con = null)
+    {
+        if ($this->aPrivateChat === null && ($this->chat_id !== null)) {
+            $this->aPrivateChat = ChildPrivateChatQuery::create()->findPk($this->chat_id, $con);
+            /* The following can be used additionally to
+                guarantee the related object contains a reference
+                to this object.  This level of coupling may, however, be
+                undesirable since it could result in an only partially populated collection
+                in the referenced object.
+                $this->aPrivateChat->addBets($this);
+             */
+        }
+
+        return $this->aPrivateChat;
+    }
+
+    /**
      * Declares an association between this object and a ChildMatch object.
      *
      * @param  ChildMatch $v
-     * @return $this|\Dende\SoccerBot\Model\PrivateChat The current object (for fluent API support)
+     * @return $this|\Dende\SoccerBot\Model\Bet The current object (for fluent API support)
      * @throws PropelException
      */
-    public function setCurrentBetMatch(ChildMatch $v = null)
+    public function setMatch(ChildMatch $v = null)
     {
         if ($v === null) {
-            $this->setCurrentBetMatchId(NULL);
+            $this->setMatchId(NULL);
         } else {
-            $this->setCurrentBetMatchId($v->getId());
+            $this->setMatchId($v->getId());
         }
 
-        $this->aCurrentBetMatch = $v;
+        $this->aMatch = $v;
 
         // Add binding for other direction of this n:n relationship.
         // If this object has already been added to the ChildMatch object, it will not be re-added.
         if ($v !== null) {
-            $v->addPrivateChat($this);
+            $v->addBet($this);
         }
 
 
@@ -1526,286 +1321,20 @@ abstract class PrivateChat implements ActiveRecordInterface
      * @return ChildMatch The associated ChildMatch object.
      * @throws PropelException
      */
-    public function getCurrentBetMatch(ConnectionInterface $con = null)
+    public function getMatch(ConnectionInterface $con = null)
     {
-        if ($this->aCurrentBetMatch === null && ($this->current_bet_match_id !== null)) {
-            $this->aCurrentBetMatch = ChildMatchQuery::create()->findPk($this->current_bet_match_id, $con);
+        if ($this->aMatch === null && ($this->match_id !== null)) {
+            $this->aMatch = ChildMatchQuery::create()->findPk($this->match_id, $con);
             /* The following can be used additionally to
                 guarantee the related object contains a reference
                 to this object.  This level of coupling may, however, be
                 undesirable since it could result in an only partially populated collection
                 in the referenced object.
-                $this->aCurrentBetMatch->addPrivateChats($this);
+                $this->aMatch->addBets($this);
              */
         }
 
-        return $this->aCurrentBetMatch;
-    }
-
-
-    /**
-     * Initializes a collection based on the name of a relation.
-     * Avoids crafting an 'init[$relationName]s' method name
-     * that wouldn't work when StandardEnglishPluralizer is used.
-     *
-     * @param      string $relationName The name of the relation to initialize
-     * @return void
-     */
-    public function initRelation($relationName)
-    {
-        if ('Bet' == $relationName) {
-            return $this->initBets();
-        }
-    }
-
-    /**
-     * Clears out the collBets collection
-     *
-     * This does not modify the database; however, it will remove any associated objects, causing
-     * them to be refetched by subsequent calls to accessor method.
-     *
-     * @return void
-     * @see        addBets()
-     */
-    public function clearBets()
-    {
-        $this->collBets = null; // important to set this to NULL since that means it is uninitialized
-    }
-
-    /**
-     * Reset is the collBets collection loaded partially.
-     */
-    public function resetPartialBets($v = true)
-    {
-        $this->collBetsPartial = $v;
-    }
-
-    /**
-     * Initializes the collBets collection.
-     *
-     * By default this just sets the collBets collection to an empty array (like clearcollBets());
-     * however, you may wish to override this method in your stub class to provide setting appropriate
-     * to your application -- for example, setting the initial array to the values stored in database.
-     *
-     * @param      boolean $overrideExisting If set to true, the method call initializes
-     *                                        the collection even if it is not empty
-     *
-     * @return void
-     */
-    public function initBets($overrideExisting = true)
-    {
-        if (null !== $this->collBets && !$overrideExisting) {
-            return;
-        }
-
-        $collectionClassName = BetTableMap::getTableMap()->getCollectionClassName();
-
-        $this->collBets = new $collectionClassName;
-        $this->collBets->setModel('\Dende\SoccerBot\Model\Bet');
-    }
-
-    /**
-     * Gets an array of ChildBet objects which contain a foreign key that references this object.
-     *
-     * If the $criteria is not null, it is used to always fetch the results from the database.
-     * Otherwise the results are fetched from the database the first time, then cached.
-     * Next time the same method is called without $criteria, the cached collection is returned.
-     * If this ChildPrivateChat is new, it will return
-     * an empty collection or the current collection; the criteria is ignored on a new object.
-     *
-     * @param      Criteria $criteria optional Criteria object to narrow the query
-     * @param      ConnectionInterface $con optional connection object
-     * @return ObjectCollection|ChildBet[] List of ChildBet objects
-     * @throws PropelException
-     */
-    public function getBets(Criteria $criteria = null, ConnectionInterface $con = null)
-    {
-        $partial = $this->collBetsPartial && !$this->isNew();
-        if (null === $this->collBets || null !== $criteria  || $partial) {
-            if ($this->isNew() && null === $this->collBets) {
-                // return empty collection
-                $this->initBets();
-            } else {
-                $collBets = ChildBetQuery::create(null, $criteria)
-                    ->filterByPrivateChat($this)
-                    ->find($con);
-
-                if (null !== $criteria) {
-                    if (false !== $this->collBetsPartial && count($collBets)) {
-                        $this->initBets(false);
-
-                        foreach ($collBets as $obj) {
-                            if (false == $this->collBets->contains($obj)) {
-                                $this->collBets->append($obj);
-                            }
-                        }
-
-                        $this->collBetsPartial = true;
-                    }
-
-                    return $collBets;
-                }
-
-                if ($partial && $this->collBets) {
-                    foreach ($this->collBets as $obj) {
-                        if ($obj->isNew()) {
-                            $collBets[] = $obj;
-                        }
-                    }
-                }
-
-                $this->collBets = $collBets;
-                $this->collBetsPartial = false;
-            }
-        }
-
-        return $this->collBets;
-    }
-
-    /**
-     * Sets a collection of ChildBet objects related by a one-to-many relationship
-     * to the current object.
-     * It will also schedule objects for deletion based on a diff between old objects (aka persisted)
-     * and new objects from the given Propel collection.
-     *
-     * @param      Collection $bets A Propel collection.
-     * @param      ConnectionInterface $con Optional connection object
-     * @return $this|ChildPrivateChat The current object (for fluent API support)
-     */
-    public function setBets(Collection $bets, ConnectionInterface $con = null)
-    {
-        /** @var ChildBet[] $betsToDelete */
-        $betsToDelete = $this->getBets(new Criteria(), $con)->diff($bets);
-
-
-        $this->betsScheduledForDeletion = $betsToDelete;
-
-        foreach ($betsToDelete as $betRemoved) {
-            $betRemoved->setPrivateChat(null);
-        }
-
-        $this->collBets = null;
-        foreach ($bets as $bet) {
-            $this->addBet($bet);
-        }
-
-        $this->collBets = $bets;
-        $this->collBetsPartial = false;
-
-        return $this;
-    }
-
-    /**
-     * Returns the number of related Bet objects.
-     *
-     * @param      Criteria $criteria
-     * @param      boolean $distinct
-     * @param      ConnectionInterface $con
-     * @return int             Count of related Bet objects.
-     * @throws PropelException
-     */
-    public function countBets(Criteria $criteria = null, $distinct = false, ConnectionInterface $con = null)
-    {
-        $partial = $this->collBetsPartial && !$this->isNew();
-        if (null === $this->collBets || null !== $criteria || $partial) {
-            if ($this->isNew() && null === $this->collBets) {
-                return 0;
-            }
-
-            if ($partial && !$criteria) {
-                return count($this->getBets());
-            }
-
-            $query = ChildBetQuery::create(null, $criteria);
-            if ($distinct) {
-                $query->distinct();
-            }
-
-            return $query
-                ->filterByPrivateChat($this)
-                ->count($con);
-        }
-
-        return count($this->collBets);
-    }
-
-    /**
-     * Method called to associate a ChildBet object to this object
-     * through the ChildBet foreign key attribute.
-     *
-     * @param  ChildBet $l ChildBet
-     * @return $this|\Dende\SoccerBot\Model\PrivateChat The current object (for fluent API support)
-     */
-    public function addBet(ChildBet $l)
-    {
-        if ($this->collBets === null) {
-            $this->initBets();
-            $this->collBetsPartial = true;
-        }
-
-        if (!$this->collBets->contains($l)) {
-            $this->doAddBet($l);
-
-            if ($this->betsScheduledForDeletion and $this->betsScheduledForDeletion->contains($l)) {
-                $this->betsScheduledForDeletion->remove($this->betsScheduledForDeletion->search($l));
-            }
-        }
-
-        return $this;
-    }
-
-    /**
-     * @param ChildBet $bet The ChildBet object to add.
-     */
-    protected function doAddBet(ChildBet $bet)
-    {
-        $this->collBets[]= $bet;
-        $bet->setPrivateChat($this);
-    }
-
-    /**
-     * @param  ChildBet $bet The ChildBet object to remove.
-     * @return $this|ChildPrivateChat The current object (for fluent API support)
-     */
-    public function removeBet(ChildBet $bet)
-    {
-        if ($this->getBets()->contains($bet)) {
-            $pos = $this->collBets->search($bet);
-            $this->collBets->remove($pos);
-            if (null === $this->betsScheduledForDeletion) {
-                $this->betsScheduledForDeletion = clone $this->collBets;
-                $this->betsScheduledForDeletion->clear();
-            }
-            $this->betsScheduledForDeletion[]= clone $bet;
-            $bet->setPrivateChat(null);
-        }
-
-        return $this;
-    }
-
-
-    /**
-     * If this collection has already been initialized with
-     * an identical criteria, it returns the collection.
-     * Otherwise if this PrivateChat is new, it will return
-     * an empty collection; or if this PrivateChat has previously
-     * been saved, it will retrieve related Bets from storage.
-     *
-     * This method is protected by default in order to keep the public
-     * api reasonable.  You can provide public methods for those you
-     * actually need in PrivateChat.
-     *
-     * @param      Criteria $criteria optional Criteria object to narrow the query
-     * @param      ConnectionInterface $con optional connection object
-     * @param      string $joinBehavior optional join type to use (defaults to Criteria::LEFT_JOIN)
-     * @return ObjectCollection|ChildBet[] List of ChildBet objects
-     */
-    public function getBetsJoinMatch(Criteria $criteria = null, ConnectionInterface $con = null, $joinBehavior = Criteria::LEFT_JOIN)
-    {
-        $query = ChildBetQuery::create(null, $criteria);
-        $query->joinWith('Match', $joinBehavior);
-
-        return $this->getBets($query, $con);
+        return $this->aMatch;
     }
 
     /**
@@ -1815,20 +1344,19 @@ abstract class PrivateChat implements ActiveRecordInterface
      */
     public function clear()
     {
-        if (null !== $this->aCurrentBetMatch) {
-            $this->aCurrentBetMatch->removePrivateChat($this);
+        if (null !== $this->aPrivateChat) {
+            $this->aPrivateChat->removeBet($this);
+        }
+        if (null !== $this->aMatch) {
+            $this->aMatch->removeBet($this);
         }
         $this->id = null;
         $this->chat_id = null;
-        $this->username = null;
-        $this->type = null;
-        $this->liveticker = null;
-        $this->registerstatus = null;
-        $this->betstatus = null;
-        $this->current_bet_match_id = null;
+        $this->match_id = null;
+        $this->home_team_goals = null;
+        $this->away_team_goals = null;
         $this->alreadyInSave = false;
         $this->clearAllReferences();
-        $this->applyDefaultValues();
         $this->resetModified();
         $this->setNew(true);
         $this->setDeleted(false);
@@ -1845,15 +1373,10 @@ abstract class PrivateChat implements ActiveRecordInterface
     public function clearAllReferences($deep = false)
     {
         if ($deep) {
-            if ($this->collBets) {
-                foreach ($this->collBets as $o) {
-                    $o->clearAllReferences($deep);
-                }
-            }
         } // if ($deep)
 
-        $this->collBets = null;
-        $this->aCurrentBetMatch = null;
+        $this->aPrivateChat = null;
+        $this->aMatch = null;
     }
 
     /**
@@ -1863,7 +1386,7 @@ abstract class PrivateChat implements ActiveRecordInterface
      */
     public function __toString()
     {
-        return (string) $this->exportTo(PrivateChatTableMap::DEFAULT_STRING_FORMAT);
+        return (string) $this->exportTo(BetTableMap::DEFAULT_STRING_FORMAT);
     }
 
     /**

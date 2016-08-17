@@ -48,7 +48,7 @@ class SoccerBot
         $this->chatRepo = new ChatRepository($this->telegramApi, $this->lang);
         $this->teamRepo = new TeamRepository($this->footballApi);
         $this->matchRepo = new MatchRepository($this->footballApi);
-        $this->commandFactory = new CommandFactory($this->chatRepo);
+        $this->commandFactory = new CommandFactory($this->chatRepo, $this->matchRepo);
 	}
 
 	function run(){
@@ -80,7 +80,7 @@ class SoccerBot
                     list($commandString, $args) = $this->commandFactory->commandStringFromMessage($message);
 
                     if (is_null($commandString)){
-                        $response = $chat->handle($message);
+                        $response = $chat->handle($message, $this->commandFactory);
                     } else {
                         $command = $this->commandFactory->createFromString($commandString, $args);
                         $response = $command->run($chat, $message);
