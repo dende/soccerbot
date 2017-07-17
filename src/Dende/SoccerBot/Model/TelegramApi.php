@@ -21,7 +21,7 @@ class TelegramApi
     {
         $this->lang = $lang;
         $this->offset = 0;
-        $this->telegram = new Api(TELEGRAM_BOT_TOKEN);
+        $this->telegram = new Api(TELEGRAM_API_TOKEN);
     }
 
     public function sendMessage($message, ChatInterface $chat){

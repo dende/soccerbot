@@ -8,17 +8,17 @@
 
 propel:
     paths:
-        schemaDir: ../../res/conf
-        phpDir: ../../src
-        phpConfDir: ../../res/conf/propel
-        sqlDir: ../../res/db
+        schemaDir: res/conf
+        phpDir: src
+        phpConfDir: res/conf/propel
+        sqlDir: res/db
     database:
         connections:
             default:
                 adapter: sqlite
                 user:
                 password:
-                dsn: sqlite:../../db/soccerbot.sq3
+                dsn: sqlite:res/db/soccerbot.sq3
                 settings:
                     charset: utf8
     generator:
