@@ -37,8 +37,8 @@ class TelegramApi
         Analog::log($this->offset, Analog::DEBUG);
         return $this->telegram->getUpdates([
             'offset' => $this->offset,
-            'limit' => TELEGRAM_BOT_LIMIT,
-            'timeout' => TELEGRAM_BOT_TIMEOUT
+            'limit' => TELEGRAM_API_LIMIT,
+            'timeout' => TELEGRAM_API_TIMEOUT
         ]);
     }
 
