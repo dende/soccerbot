@@ -12,7 +12,6 @@ use Dende\SoccerBot\Model\MatchQuery;
 use Dende\SoccerBot\Model\Message;
 use Dende\SoccerBot\Model\PrivateChat;
 use Dende\SoccerBot\Model\TeamQuery;
-use GuzzleHttp\Client;
 use Propel\Runtime\Collection\ObjectCollection;
 
 class MatchRepository
@@ -23,6 +22,19 @@ class MatchRepository
     {
         $this->footballApi = $footballApi;
         $this->init();
+    }
+
+    public function create(array $matchData){
+        $match = new Match();
+        $match->setHomeTeam($matchData['homeTeam']);
+        $match->setAwayTeam($matchData['awayTeam']);
+        $match->setDate($matchData['date']);
+        if (is_null($matchData['status']))
+            $matchData['status'] = Match::STATUS_SCHEDULED;
+        $match->setStatus($matchData["status"]);
+        $match->setUrl($matchData["url"]);
+        $match->save();
+
     }
 
     /**
@@ -172,23 +184,23 @@ class MatchRepository
             }
             $data = $this->footballApi->fetch($uri);
             foreach ($data["fixtures"] as $fixtureData){
-                $match = new Match();
+                $matchData = [];
                 $homeTeam = TeamQuery::create()->findOneByName($fixtureData["homeTeamName"]);
                 if (is_null($homeTeam)){
                     Analog::log('Home Team is null', Analog::CRITICAL);
                 }
-                $match->setHomeTeam($homeTeam);
+                $matchData['homeTeam'] = $homeTeam;
                 $awayTeam = TeamQuery::create()->findOneByName($fixtureData["awayTeamName"]);
                 if (is_null($awayTeam)){
                     Analog::log('Away Team is null', Analog::CRITICAL);
                 }
-                $match->setAwayTeam($awayTeam);
+                $matchData['awayTeam'] = $awayTeam;
                 $date = new \DateTime($fixtureData["date"]);
                 $date->setTimezone(new \DateTimeZone('Europe/Berlin'));
-                $match->setDate($date);
-                $match->setStatus($fixtureData["status"]);
-                $match->setUrl(array_get($fixtureData, '_links.self.href'));
-                $match->save();
+                $matchData['date'] = $date;
+                $matchData['status'] = $fixtureData['status'];
+                $matchData['url'] = array_get($fixtureData, '_links.self.href');
+                $this->create($matchData);
             }
             Analog::log('Updated the Matches in the database');
         } else {
@@ -197,7 +209,7 @@ class MatchRepository
     }
 
     public function getOpenMatchesForChat(PrivateChat $chat){
-        $nextMatches = MatchQuery::create()->where('matches.status = ?', 'TIMED')->orderByDate()->find();
+        $nextMatches = MatchQuery::create()->where('matches.status = ?', Match::STATUS_SCHEDULED)->_or()->where('matches.status = ?', Match::STATUS_TIMED)->orderByDate()->find();
         $bidMatches  = MatchQuery::create()->useBetQuery()->filterByPrivateChat($chat)->find();
 
         $collection = new ObjectCollection();

@@ -16,6 +16,14 @@ use Dende\SoccerBot\Model\Base\Match as BaseMatch;
  */
 class Match extends BaseMatch
 {
+    //TODO: implement
+    const STATUS_SCHEDULED = 'SCHEDULED';
+    const STATUS_TIMED     = 'TIMED';
+    const STATUS_IN_PLAY   = 'IN_PLAY';
+    const STATUS_FINISHED  = 'FINISHED';
+    const STATUS_CANCELED  = 'CANCELED';
+    const STATUS_POSTPONED = 'POSTPONED';
+
 
     public function __construct()
     {

@@ -4,6 +4,7 @@ namespace Dende\SoccerBot\Command;
 
 use Dende\SoccerBot\Helper;
 use Dende\SoccerBot\Model\GroupChat;
+use Dende\SoccerBot\Model\Match;
 use Dende\SoccerBot\Model\MatchQuery;
 use Dende\SoccerBot\Model\Message;
 use Dende\SoccerBot\Model\PrivateChat;
@@ -23,7 +24,7 @@ class NextCommand extends AbstractCommand
     protected function runBoth(){
         $m = ($this->args && is_numeric($this->args[0])) ? $this->args[0] : 1;
         $message = new Message('command.next.nextMatches', [], $m);
-        $nextMatches = MatchQuery::create()->where('matches.status = ?', 'TIMED')->orderByDate()->limit($m)->find();
+        $nextMatches = MatchQuery::create()->where('matches.status = ?', Match::STATUS_TIMED)->_or()->where('matches.status = ?', Match::STATUS_SCHEDULED)->orderByDate()->limit($m)->find();
         foreach ($nextMatches as $nextMatch) {
             $difference = Helper::timeDifference($nextMatch->getDate());
             $message->addLine(
