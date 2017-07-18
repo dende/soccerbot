@@ -3,14 +3,15 @@
         "ext-intl" : "*",
         "ext-xml" : "*",
         "irazasyed/telegram-bot-sdk": "^2.0",
-        "propel/propel": "~2.0@dev",
         "guzzlehttp/guzzle": "~6.0",
-        "raveren/kint": "^1.0",
         "analog/analog": "dev-master",
         "nesbot/carbon": "^1.21",
         "yohang/finite": "~1.1",
         "illuminate/support": "^5.2",
-        "symfony/translation": "^3.1"
+        "symfony/translation": "^3.1",
+        "kint-php/kint": "^2.1",
+        "illuminate/database": "^5.4",
+        "doctrine/dbal": "^2.5"
     },
   "autoload": {
     "psr-4": {"Dende\\SoccerBot\\": "src/Dende/SoccerBot/"}
