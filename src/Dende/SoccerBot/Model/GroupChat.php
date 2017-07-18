@@ -6,6 +6,7 @@ use Dende\SoccerBot\Model\Base\GroupChat as BaseGroupChat;
 use Finite\Loader\ArrayLoader;
 use Finite\StatefulInterface;
 use Finite\StateMachine\StateMachine as FiniteStateMachine;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * Skeleton subclass for representing a row from the 'groupchats' table.
@@ -17,11 +18,14 @@ use Finite\StateMachine\StateMachine as FiniteStateMachine;
  * long as it does not already exist in the output directory.
  *
  */
-class GroupChat extends BaseGroupChat implements StatefulInterface, ChatInterface
+class GroupChat extends Model implements StatefulInterface, ChatInterface
 {
     /** @var  FiniteStateMachine */
     private $fsm;
     protected $state;
+    protected $table = 'groupchats';
+    public $timestamps = false;
+
 
     public function init()
     {
@@ -84,4 +88,8 @@ class GroupChat extends BaseGroupChat implements StatefulInterface, ChatInterfac
         return $this->fsm;
     }
 
+    public function getChatId()
+    {
+        // TODO: Implement getChatId() method.
+    }
 }

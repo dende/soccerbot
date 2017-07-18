@@ -23,7 +23,7 @@ class ChatFactory
         $chat = null;
         
         try{
-            $chat = GroupChatQuery::create()->findOneByChatId($chatId);
+            $chat = GroupChat::find($chatId);
         } catch (\Propel\Runtime\Exception\EntityNotFoundException $e){}
         
         if (!is_null($chat)){
@@ -31,7 +31,7 @@ class ChatFactory
         }
         
         try {
-            $chat = PrivateChatQuery::create()->findOneByChatId($chatId);
+            $chat = PrivateChat::find($chatId);
         } catch (\Propel\Runtime\Exception\EntityNotFoundException $e) {}
 
         if (!is_null($chat)) {
@@ -52,17 +52,17 @@ class ChatFactory
             case "channel":
             default:
                 $chat = new GroupChat();
-                $chat->setType('group');
+                $chat->type = 'group';
 
             break;
             case "private":
                 $chat = new PrivateChat();
-                $chat->setType('private');
-                $chat->setRegisterstatus(PrivateChat::REGISTER_STATUS_UNREGISTERED);
+                $chat->type = 'private';
+                $chat->registerstatus = PrivateChat::REGISTER_STATUS_UNREGISTERED;
                 break;
         }
-        $chat->setChatId($telegramChat->getId());
-        $chat->setLiveticker(false);
+        $chat->chat_id = $telegramChat->getId();
+        $chat->liveticker = false;
         $chat->init();
         $chat->save();
         return $chat;

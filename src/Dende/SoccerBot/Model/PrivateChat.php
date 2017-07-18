@@ -8,6 +8,7 @@ use Dende\SoccerBot\Command\RegisterCommand;
 use Dende\SoccerBot\Model\Base\PrivateChat as BasePrivateChat;
 use Finite\Loader\ArrayLoader;
 use Finite\StateMachine\StateMachine as FiniteStateMachine;
+use Illuminate\Database\Eloquent\Model;
 use Telegram\Bot\Objects\Message;
 
 /**
@@ -20,12 +21,15 @@ use Telegram\Bot\Objects\Message;
  * long as it does not already exist in the output directory.
  *
  */
-class PrivateChat extends BasePrivateChat implements ChatInterface
+class PrivateChat extends Model implements ChatInterface
 {
     /** @var  FiniteStateMachine */
     private $registerFsm;
     /** @var  FiniteStateMachine */
     private $betFsm;
+
+    protected $table = 'privatechats';
+    public $timestamps = false;
 
     const REGISTER_STATUS_UNREGISTERED = 'unregistered';
     const REGISTER_STATUS_KEEP_NAME_ASKED = 'keep_name_asked';
@@ -143,4 +147,8 @@ class PrivateChat extends BasePrivateChat implements ChatInterface
         return $this->betFsm;
     }
 
+    public function getChatId()
+    {
+        // TODO: Implement getChatId() method.
+    }
 }

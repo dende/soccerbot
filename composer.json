@@ -11,7 +11,8 @@
         "symfony/translation": "^3.1",
         "kint-php/kint": "^2.1",
         "illuminate/database": "^5.4",
-        "doctrine/dbal": "^2.5"
+        "doctrine/dbal": "^2.5",
+        "robmorgan/phinx": "^0.8.1"
     },
   "autoload": {
     "psr-4": {"Dende\\SoccerBot\\": "src/Dende/SoccerBot/"}

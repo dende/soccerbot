@@ -6,8 +6,8 @@ namespace Dende\SoccerBot\Repository;
 
 use Analog\Analog;
 use Dende\SoccerBot\Model\Team;
-use Dende\SoccerBot\Model\TeamQuery;
 use Dende\SoccerBot\Model\FootballApi;
+use Illuminate\Database\Capsule\Manager as Capsule;
 
 class TeamRepository
 {
@@ -21,7 +21,7 @@ class TeamRepository
 
     public function init()
     {
-        if (is_null(TeamQuery::create()->findPk(1))){
+        if (Capsule::table('teams')->count() == 0){
             $uri = array_get($this->footballApi->getRootData(), '_links.teams.href');
             if (empty($uri)){
                 Analog::log('No Teams found', Analog::CRITICAL);
@@ -29,8 +29,8 @@ class TeamRepository
             $data = $this->footballApi->fetch($uri);
             foreach (array_get($data, 'teams', []) as $teamData){
                 $team = new Team();
-                $team->setName(array_get($teamData, 'name'));
-                $team->setCode(array_get($teamData, 'code'));
+                $team->name = array_get($teamData, 'name');
+                $team->code = array_get($teamData, 'code');
                 $team->save();
             }
             Analog::log('Updated the Teams in the database');

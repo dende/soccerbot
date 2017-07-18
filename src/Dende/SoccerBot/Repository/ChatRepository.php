@@ -4,19 +4,10 @@
 namespace Dende\SoccerBot\Repository;
 
 
-use Analog\Analog;
-use Carbon\Carbon;
-use Dende\SoccerBot\Model\Base\GroupChat;
-use Dende\SoccerBot\Model\Base\GroupChatQuery;
-use Dende\SoccerBot\Model\Base\PrivateChatQuery;
 use Dende\SoccerBot\Model\ChatInterface;
-use Dende\SoccerBot\Model\FootballApi;
-use Dende\SoccerBot\Model\Match;
-use Dende\SoccerBot\Model\MatchQuery;
+use Dende\SoccerBot\Model\GroupChat;
 use Dende\SoccerBot\Model\PrivateChat;
-use Dende\SoccerBot\Model\TeamQuery;
 use Dende\SoccerBot\Model\TelegramApi;
-use GuzzleHttp\Client;
 use Symfony\Component\Translation\Translator;
 
 class ChatRepository
@@ -54,8 +45,8 @@ class ChatRepository
      */
     public function getLivetickerChats()
     {
-        $groupChats = GroupChatQuery::create()->filterByLiveticker(true)->find();
-        $privateChats = PrivateChatQuery::create()->filterByLiveticker(true)->find();
+        $groupChats = GroupChat::where('liveticker', '=', true)->get();
+        $privateChats = PrivateChat::where('liveticker', '=', true)->get();
 
         return array_merge($groupChats->toArray(), $privateChats->toArray());
 

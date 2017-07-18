@@ -8,12 +8,10 @@ use Analog\Analog;
 use Carbon\Carbon;
 use Dende\SoccerBot\Model\FootballApi;
 use Dende\SoccerBot\Model\Match;
-use Dende\SoccerBot\Model\MatchQuery;
 use Dende\SoccerBot\Model\Message;
 use Dende\SoccerBot\Model\PrivateChat;
-use Dende\SoccerBot\Model\TeamQuery;
-use Propel\Runtime\Collection\ObjectCollection;
-
+use Dende\SoccerBot\Model\Team;
+use Illuminate\Database\Capsule\Manager as Capsule;
 class MatchRepository
 {
     private $footballApi;
@@ -24,30 +22,14 @@ class MatchRepository
         $this->init();
     }
 
-    public function create(array $matchData){
-        $match = new Match();
-        $match->setHomeTeam($matchData['homeTeam']);
-        $match->setAwayTeam($matchData['awayTeam']);
-        $match->setDate($matchData['date']);
-        if (is_null($matchData['status']))
-            $matchData['status'] = Match::STATUS_SCHEDULED;
-        $match->setStatus($matchData["status"]);
-        $match->setUrl($matchData["url"]);
-        $match->save();
-
-    }
-
     /**
      * @return Message[]
      */
     public function update(){
         Analog::log("Updating matches");
         /** @var Match[] $timedMatches */
-        $timedMatches = MatchQuery::create()
-            ->where('matches.status = ?', 'TIMED')
-            ->_or()
-            ->where('matches.status = ?', 'IN_PLAY')
-            ->find();
+        $timedMatches = Match::where('status', '=', 'TIMED')
+            ->orWhere('status', '=', 'IN_PLAY');
 
 
         $messages = [];
@@ -174,7 +156,7 @@ class MatchRepository
     }
 
     public function init(){
-        $matchCount = MatchQuery::create()->count();
+        $matchCount = Capsule::table('matches')->count();
 
         $rootData = $this->footballApi->getRootData();
         if ($matchCount < $rootData["numberOfGames"]){
@@ -184,23 +166,15 @@ class MatchRepository
             }
             $data = $this->footballApi->fetch($uri);
             foreach ($data["fixtures"] as $fixtureData){
-                $matchData = [];
-                $homeTeam = TeamQuery::create()->findOneByName($fixtureData["homeTeamName"]);
-                if (is_null($homeTeam)){
-                    Analog::log('Home Team is null', Analog::CRITICAL);
-                }
-                $matchData['homeTeam'] = $homeTeam;
-                $awayTeam = TeamQuery::create()->findOneByName($fixtureData["awayTeamName"]);
-                if (is_null($awayTeam)){
-                    Analog::log('Away Team is null', Analog::CRITICAL);
-                }
-                $matchData['awayTeam'] = $awayTeam;
-                $date = new \DateTime($fixtureData["date"]);
-                $date->setTimezone(new \DateTimeZone('Europe/Berlin'));
-                $matchData['date'] = $date;
-                $matchData['status'] = $fixtureData['status'];
-                $matchData['url'] = array_get($fixtureData, '_links.self.href');
-                $this->create($matchData);
+                $match = new Match();
+                $test = $match->homeTeam();
+                $match->home_team_id = Team::whereName($fixtureData["homeTeamName"])->first()->id;
+                $match->away_team_id = Team::whereName($fixtureData["awayTeamName"])->first()->id;
+                $match->date = new \DateTime($fixtureData["date"]);
+                $match->date->setTimezone(new \DateTimeZone('Europe/Berlin'));
+                $match->status = $fixtureData['status'];
+                $match->url = array_get($fixtureData, '_links.self.href');
+                $match->save();
             }
             Analog::log('Updated the Matches in the database');
         } else {

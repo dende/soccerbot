@@ -1,8 +1,7 @@
 <?php
 
 namespace Dende\SoccerBot\Model;
-
-use Dende\SoccerBot\Model\Base\Match as BaseMatch;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * Skeleton subclass for representing a row from the 'matches' table.
@@ -14,8 +13,9 @@ use Dende\SoccerBot\Model\Base\Match as BaseMatch;
  * long as it does not already exist in the output directory.
  *
  */
-class Match extends BaseMatch
+class Match extends Model
 {
+
     //TODO: implement
     const STATUS_SCHEDULED = 'SCHEDULED';
     const STATUS_TIMED     = 'TIMED';
@@ -24,11 +24,20 @@ class Match extends BaseMatch
     const STATUS_CANCELED  = 'CANCELED';
     const STATUS_POSTPONED = 'POSTPONED';
 
+    protected $table = "matches";
+    public $timestamps = false;
+    protected $attributes = [
+        'home_team_goals' => 0,
+        'away_team_goals' => 0
+    ];
 
-    public function __construct()
-    {
-        $this->setHomeTeamGoals(0);
-        $this->setAwayTeamGoals(0);
+    public function homeTeam(){
+        return $this->belongsTo('\Dende\SoccerBot\Model\Team', 'home_team_id');
     }
+
+    public function awayTeam(){
+        return $this->belongsTo('\Dende\SoccerBot\Model\Team', 'away_team_id');
+    }
+
 
 }

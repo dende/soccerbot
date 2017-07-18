@@ -1,7 +1,6 @@
 <?php
 use Carbon\Carbon;
 
-\Kint::$maxLevels = 0;
 setlocale(LC_TIME, 'German');
 Carbon::setLocale("de");
 return [

@@ -1,8 +1,7 @@
 <?php
 
 namespace Dende\SoccerBot\Model;
-
-use Dende\SoccerBot\Model\Base\Bet as BaseBet;
+use Illuminate\Database\Eloquent\Model;
 
 /**
  * Skeleton subclass for representing a row from the 'bets' table.
@@ -14,8 +13,10 @@ use Dende\SoccerBot\Model\Base\Bet as BaseBet;
  * long as it does not already exist in the output directory.
  *
  */
-class Bet extends BaseBet
+class Bet extends Model
 {
+    protected $tabletable = "bets";
+    public $timestamps = false;
 
     public function getBetString()
     {
