@@ -19,7 +19,7 @@ use Telegram\Bot\Objects\Message as TelegramMessage;
 class BetCommand extends AbstractCommand
 {
     protected function runPrivate(PrivateChat $chat, TelegramMessage $message){
-        if ($chat->getRegisterstatus() !== PrivateChat::REGISTER_STATUS_REGISTERED){
+        if ($chat->registerstatus !== PrivateChat::REGISTER_STATUS_REGISTERED){
             return new Message('command.bet.register');
         }
 
@@ -35,7 +35,7 @@ class BetCommand extends AbstractCommand
         $fsm = $chat->getBetFsm();
         $fsm->apply(PrivateChat::BET_TRANSITION_ASK_GOALS);
 
-        $chat->setCurrentBetMatch($match);
+        $chat->current_bet_match_id = $match->id;
         $chat->save();
 
         $homeTeam = $match->getHomeTeam();
@@ -72,7 +72,7 @@ class BetCommand extends AbstractCommand
         $telegram = $this->chatRepo->getTelegramApi()->getTelegram();
         $lang = $this->chatRepo->getLang();
         $telegram->sendMessage([
-            'chat_id' => $chat->getChatId(),
+            'chat_id' => $chat->chat_id,
             'text' => $lang->trans('command.bet.info', [
                 '%homeTeamName%' => $bet->getMatch()->getHomeTeam()->getName(),
                 '%awayTeamName%' => $bet->getMatch()->getAwayTeam()->getName(),

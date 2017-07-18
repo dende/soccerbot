@@ -8,6 +8,7 @@
 
 namespace Dende\SoccerBot\Model;
 
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Symfony\Component\Config\Definition\Exception\Exception;
 use \Telegram\Bot\Objects\Chat as TelegramChat;
 
@@ -23,16 +24,16 @@ class ChatFactory
         $chat = null;
         
         try{
-            $chat = GroupChat::find($chatId);
-        } catch (\Propel\Runtime\Exception\EntityNotFoundException $e){}
+            $chat = GroupChat::where('chat_id', '=', $chatId)->firstOrFail();
+        } catch (ModelNotFoundException $e){}
         
         if (!is_null($chat)){
             return $chat;
         }
         
         try {
-            $chat = PrivateChat::find($chatId);
-        } catch (\Propel\Runtime\Exception\EntityNotFoundException $e) {}
+            $chat = PrivateChat::where('chat_id', '=', $chatId)->firstOrFail();
+        } catch (ModelNotFoundException $e) {}
 
         if (!is_null($chat)) {
             $chat->restore();

@@ -44,7 +44,7 @@ class RegisterCommand extends AbstractCommand
             ]);
 
             $telegram->sendMessage([
-                'chat_id' => $chat->getChatId(),
+                'chat_id' => $chat->chat_id,
                 'text' => $lang->trans('command.register.keepUsername', ['%username%' => $username]),
                 'reply_markup' => $reply_markup,
                 'parse_mode' => 'markdown'

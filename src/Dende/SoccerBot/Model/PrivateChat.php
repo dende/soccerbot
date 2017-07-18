@@ -5,7 +5,6 @@ namespace Dende\SoccerBot\Model;
 use Dende\SoccerBot\Command\BetCommand;
 use Dende\SoccerBot\Command\CommandFactory;
 use Dende\SoccerBot\Command\RegisterCommand;
-use Dende\SoccerBot\Model\Base\PrivateChat as BasePrivateChat;
 use Finite\Loader\ArrayLoader;
 use Finite\StateMachine\StateMachine as FiniteStateMachine;
 use Illuminate\Database\Eloquent\Model;
@@ -32,21 +31,25 @@ class PrivateChat extends Model implements ChatInterface
     public $timestamps = false;
 
     const REGISTER_STATUS_UNREGISTERED = 'unregistered';
-    const REGISTER_STATUS_KEEP_NAME_ASKED = 'keep_name_asked';
-    const REGISTER_STATUS_NAME_ASKED = 'name_asked';
+    const REGISTER_STATUS_KEEP_TELEGRAM_USERNAME_ASKED = 'keep_telegram_username_asked';
+    const REGISTER_STATUS_ENTER_USERNAME_ASKED = 'enter_username_asked';
+    const REGISTER_STATUS_KEEP_ENTERED_USERNAME_ASKED = 'keep_entered_username_asked';
     const REGISTER_STATUS_REGISTERED = 'registered';
 
-    const REGISTER_TRANSITION_ASK_KEEP_NAME = 'ask_keep_name';
-    const REGISTER_TRANSITION_ASK_NAME = 'ask_name';
-    const REGISTER_TRANSITION_ASK_NEW_NAME = 'ask_new_name';
-    const REGISTER_TRANSITION_KEEP_NAME = 'keep_name';
-    const REGISTER_TRANSITION_SET_NAME = 'set_name';
+    const REGISTER_TRANSITION_ASK_KEEP_TELEGRAM_USERNAME = 'ask_keep_telegram_username';
+    const REGISTER_TRANSITION_ASK_ENTER_USERNAME = 'ask_enter_username';
+    const REGISTER_TRANSISTION_NOT_USING_TELEGRAM_USERNAME = 'not_using_telegram_username';
+    const REGISTER_TRANSISTION_USING_TELEGRAM_USERNAME = 'using_telegram_username';
+    const REGISTER_TRANSITION_ASK_KEEP_ENTERED_USERNAME = 'ask_keep_entered_username';
+    const REGISTER_TRANSITION_NOT_KEEPING_ENTERED_USERNAME = 'not_keeping_entered_username';
+    const REGISTER_TRANSITION_KEEPING_ENTERED_USERNAME = 'keeping_entered_username';
 
     const BET_STATUS_INACTIVE = 'inactive';
-    const BET_STATUS_GOALS_ASKED = 'goals_asked';
+    const BET_STATUS_WAITING_FOR_BET = 'waiting_for_bet';
 
     const BET_TRANSITION_ASK_GOALS = 'ask_goals';
     const BET_TRANSITION_NEXT = 'next';
+    const BET_TRANSITION_LATER = 'later';
     const BET_TRANSITION_DONE = 'done';
 
     const REGEX_USERNAME = '/^[a-zA-Z0-9]{3,18}$/';
@@ -60,30 +63,39 @@ class PrivateChat extends Model implements ChatInterface
             'property_path' => 'registerstatus',
             'states' => [
                 PrivateChat::REGISTER_STATUS_UNREGISTERED    => ['type' => 'initial'],
-                PrivateChat::REGISTER_STATUS_KEEP_NAME_ASKED => ['type' => 'normal'],
-                PrivateChat::REGISTER_STATUS_NAME_ASKED      => ['type' => 'normal'],
+                PrivateChat::REGISTER_STATUS_KEEP_TELEGRAM_USERNAME_ASKED => ['type' => 'normal'],
+                PrivateChat::REGISTER_STATUS_ENTER_USERNAME_ASKED => ['type' => 'normal'],
+                PrivateChat::REGISTER_STATUS_KEEP_ENTERED_USERNAME_ASKED => ['type' => 'normal'],
                 PrivateChat::REGISTER_STATUS_REGISTERED      => ['type' => 'final'],
             ],
             'transitions' => [
-                PrivateChat::REGISTER_TRANSITION_ASK_KEEP_NAME => [
+                PrivateChat::REGISTER_TRANSITION_ASK_KEEP_TELEGRAM_USERNAME => [
                     'from' => PrivateChat::REGISTER_STATUS_UNREGISTERED,
-                    'to'   => PrivateChat::REGISTER_STATUS_KEEP_NAME_ASKED
+                    'to'   => PrivateChat::REGISTER_STATUS_KEEP_TELEGRAM_USERNAME_ASKED
                 ],
-                PrivateChat::REGISTER_TRANSITION_ASK_NAME => [
+                PrivateChat::REGISTER_TRANSITION_ASK_ENTER_USERNAME => [
                     'from' => PrivateChat::REGISTER_STATUS_UNREGISTERED,
-                    'to'   => PrivateChat::REGISTER_STATUS_NAME_ASKED,
+                    'to'   => PrivateChat::REGISTER_STATUS_ENTER_USERNAME_ASKED,
                 ],
-                PrivateChat::REGISTER_TRANSITION_ASK_NEW_NAME => [
-                    'from' => PrivateChat::REGISTER_STATUS_KEEP_NAME_ASKED,
-                    'to'   => PrivateChat::REGISTER_STATUS_NAME_ASKED
+                PrivateChat::REGISTER_TRANSISTION_NOT_USING_TELEGRAM_USERNAME => [
+                    'from' => PrivateChat::REGISTER_STATUS_KEEP_TELEGRAM_USERNAME_ASKED,
+                    'to'   => PrivateChat::REGISTER_STATUS_ENTER_USERNAME_ASKED
                 ],
-                PrivateChat::REGISTER_TRANSITION_KEEP_NAME => [
-                    'from' => PrivateChat::REGISTER_STATUS_KEEP_NAME_ASKED,
-                    'to'   => PrivateChat::REGISTER_STATUS_REGISTERED,
+                PrivateChat::REGISTER_TRANSISTION_USING_TELEGRAM_USERNAME => [
+                    'from' => PrivateChat::REGISTER_STATUS_KEEP_TELEGRAM_USERNAME_ASKED,
+                    'to'   => PrivateChat::REGISTER_STATUS_REGISTERED
                 ],
-                PrivateChat::REGISTER_TRANSITION_SET_NAME => [
-                    'from' => PrivateChat::REGISTER_STATUS_NAME_ASKED,
-                    'to'   => PrivateChat::REGISTER_STATUS_REGISTERED,
+                PrivateChat::REGISTER_TRANSITION_ASK_KEEP_ENTERED_USERNAME => [
+                    'from' => PrivateChat::REGISTER_STATUS_ENTER_USERNAME_ASKED,
+                    'to'   => PrivateChat::REGISTER_STATUS_KEEP_ENTERED_USERNAME_ASKED
+                ],
+                PrivateChat::REGISTER_TRANSITION_NOT_KEEPING_ENTERED_USERNAME => [
+                    'from' => PrivateChat::REGISTER_STATUS_KEEP_ENTERED_USERNAME_ASKED,
+                    'to'   => PrivateChat::REGISTER_STATUS_ENTER_USERNAME_ASKED
+                ],
+                PrivateChat::REGISTER_TRANSITION_KEEPING_ENTERED_USERNAME => [
+                    'from' => PrivateChat::REGISTER_STATUS_KEEP_ENTERED_USERNAME_ASKED,
+                    'to'   => PrivateChat::REGISTER_STATUS_REGISTERED
                 ]
             ]
         ]);
@@ -95,21 +107,25 @@ class PrivateChat extends Model implements ChatInterface
             'class' => 'PrivateChat',
             'property_path' => 'betstatus',
             'states' => [
-                PrivateChat::BET_STATUS_INACTIVE => ['type' => 'normal'],
-                PrivateChat::BET_STATUS_GOALS_ASKED => ['type' => 'normal'],
+                PrivateChat::BET_STATUS_INACTIVE => ['type' => 'initial'],
+                PrivateChat::BET_STATUS_WAITING_FOR_BET => ['type' => 'normal'],
             ],
             'transitions' => [
                 PrivateChat::BET_TRANSITION_ASK_GOALS => [
                     'from' => PrivateChat::BET_STATUS_INACTIVE,
-                    'to' => PrivateChat::BET_STATUS_GOALS_ASKED,
+                    'to' => PrivateChat::BET_STATUS_WAITING_FOR_BET,
                 ],
                 PrivateChat::BET_TRANSITION_DONE => [
-                    'from' => PrivateChat::BET_STATUS_GOALS_ASKED,
+                    'from' => PrivateChat::BET_STATUS_WAITING_FOR_BET,
                     'to' => PrivateChat::BET_STATUS_INACTIVE,
                 ],
+                PrivateChat::BET_TRANSITION_LATER => [
+                    'from' => PrivateChat::BET_STATUS_WAITING_FOR_BET,
+                    'to' => PrivateChat::BET_STATUS_INACTIVE
+                ],
                 PrivateChat::BET_TRANSITION_NEXT => [
-                    'from' => PrivateChat::BET_STATUS_GOALS_ASKED,
-                    'to' => PrivateChat::BET_STATUS_GOALS_ASKED,
+                    'from' => PrivateChat::BET_STATUS_WAITING_FOR_BET,
+                    'to' => PrivateChat::BET_STATUS_WAITING_FOR_BET,
                 ]
             ]
         ]);
@@ -124,13 +140,13 @@ class PrivateChat extends Model implements ChatInterface
     }
 
     public function handle(Message $message, CommandFactory $commandFactory){
-        if ($this->getRegisterstatus() !== PrivateChat::REGISTER_STATUS_UNREGISTERED &&
-        $this->getRegisterstatus() !== PrivateChat::REGISTER_STATUS_REGISTERED){
+        if ($this->registerstatus !== PrivateChat::REGISTER_STATUS_UNREGISTERED &&
+        $this->registerstatus !== PrivateChat::REGISTER_STATUS_REGISTERED){
             $command = $commandFactory->createFromString("register");
             /** @var $command RegisterCommand */
             return $command->handleAnswer($this, $message);
         }
-        if ($this->getBetstatus() === PrivateChat::BET_STATUS_GOALS_ASKED){
+        if ($this->betstatus === PrivateChat::BET_STATUS_WAITING_FOR_BET){
             $command = $commandFactory->createFromString("bet");
             /** @var BetCommand $command */
             return $command->handleAnswer($this, $message);

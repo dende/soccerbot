@@ -26,7 +26,7 @@ class TelegramApi
 
     public function sendMessage($message, ChatInterface $chat){
         if (!empty($message) && $message instanceof Message){
-            $this->telegram->sendMessage(['chat_id' => $chat->getChatId(), 'text' => $message->translate($this->lang), 'parse_mode' => 'Markdown']);
+            $this->telegram->sendMessage(['chat_id' => $chat->chat_id, 'text' => $message->translate($this->lang), 'parse_mode' => 'Markdown']);
         }
     }
 
