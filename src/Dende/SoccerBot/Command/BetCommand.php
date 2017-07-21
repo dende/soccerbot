@@ -10,6 +10,7 @@ namespace Dende\SoccerBot\Command;
 
 
 use Dende\SoccerBot\Model\Bet;
+use Dende\SoccerBot\Model\FiniteStateMachine\Registration;
 use Dende\SoccerBot\Model\GroupChat;
 use Dende\SoccerBot\Model\Match;
 use Dende\SoccerBot\Model\Message;
@@ -19,7 +20,7 @@ use Telegram\Bot\Objects\Message as TelegramMessage;
 class BetCommand extends AbstractCommand
 {
     protected function runPrivate(PrivateChat $chat, TelegramMessage $message){
-        if ($chat->registerstatus !== PrivateChat::REGISTER_STATUS_REGISTERED){
+        if ($chat->registerstatus !== TelegramMessage::REGISTER_STATUS_REGISTERED){
             return new Message('command.bet.register');
         }
 

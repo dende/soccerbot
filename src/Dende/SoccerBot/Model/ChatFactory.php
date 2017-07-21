@@ -8,6 +8,7 @@
 
 namespace Dende\SoccerBot\Model;
 
+use Dende\SoccerBot\Model\FiniteStateMachine\Registration;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Symfony\Component\Config\Definition\Exception\Exception;
 use \Telegram\Bot\Objects\Chat as TelegramChat;
@@ -59,7 +60,7 @@ class ChatFactory
             case "private":
                 $chat = new PrivateChat();
                 $chat->type = 'private';
-                $chat->registerstatus = PrivateChat::REGISTER_STATUS_UNREGISTERED;
+                $chat->registerstatus = Registration::STATUS_UNREGISTERED;
                 break;
         }
         $chat->chat_id = $telegramChat->getId();

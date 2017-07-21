@@ -5,6 +5,7 @@ namespace Dende\SoccerBot\Model;
 use Dende\SoccerBot\Command\BetCommand;
 use Dende\SoccerBot\Command\CommandFactory;
 use Dende\SoccerBot\Command\RegisterCommand;
+use Dende\SoccerBot\Model\FiniteStateMachine\Registration;
 use Finite\Loader\ArrayLoader;
 use Finite\StateMachine\StateMachine as FiniteStateMachine;
 use Illuminate\Database\Eloquent\Model;
@@ -30,20 +31,6 @@ class PrivateChat extends Model implements ChatInterface
     protected $table = 'privatechats';
     public $timestamps = false;
 
-    const REGISTER_STATUS_UNREGISTERED = 'unregistered';
-    const REGISTER_STATUS_KEEP_TELEGRAM_USERNAME_ASKED = 'keep_telegram_username_asked';
-    const REGISTER_STATUS_ENTER_USERNAME_ASKED = 'enter_username_asked';
-    const REGISTER_STATUS_KEEP_ENTERED_USERNAME_ASKED = 'keep_entered_username_asked';
-    const REGISTER_STATUS_REGISTERED = 'registered';
-
-    const REGISTER_TRANSITION_ASK_KEEP_TELEGRAM_USERNAME = 'ask_keep_telegram_username';
-    const REGISTER_TRANSITION_ASK_ENTER_USERNAME = 'ask_enter_username';
-    const REGISTER_TRANSISTION_NOT_USING_TELEGRAM_USERNAME = 'not_using_telegram_username';
-    const REGISTER_TRANSISTION_USING_TELEGRAM_USERNAME = 'using_telegram_username';
-    const REGISTER_TRANSITION_ASK_KEEP_ENTERED_USERNAME = 'ask_keep_entered_username';
-    const REGISTER_TRANSITION_NOT_KEEPING_ENTERED_USERNAME = 'not_keeping_entered_username';
-    const REGISTER_TRANSITION_KEEPING_ENTERED_USERNAME = 'keeping_entered_username';
-
     const BET_STATUS_INACTIVE = 'inactive';
     const BET_STATUS_WAITING_FOR_BET = 'waiting_for_bet';
 
@@ -52,55 +39,14 @@ class PrivateChat extends Model implements ChatInterface
     const BET_TRANSITION_LATER = 'later';
     const BET_TRANSITION_DONE = 'done';
 
-    const REGEX_USERNAME = '/^[a-zA-Z0-9]{3,18}$/';
     const REGEX_BET = '/^[0-9]{1,2}:[0-9]{1,2}$/';
 
+    /**
+     *
+     */
     public function init()
     {
-        $this->registerFsm = new FiniteStateMachine($this);
-        $registerLoader = new ArrayLoader([
-            'class'  => 'PrivateChat',
-            'property_path' => 'registerstatus',
-            'states' => [
-                PrivateChat::REGISTER_STATUS_UNREGISTERED    => ['type' => 'initial'],
-                PrivateChat::REGISTER_STATUS_KEEP_TELEGRAM_USERNAME_ASKED => ['type' => 'normal'],
-                PrivateChat::REGISTER_STATUS_ENTER_USERNAME_ASKED => ['type' => 'normal'],
-                PrivateChat::REGISTER_STATUS_KEEP_ENTERED_USERNAME_ASKED => ['type' => 'normal'],
-                PrivateChat::REGISTER_STATUS_REGISTERED      => ['type' => 'final'],
-            ],
-            'transitions' => [
-                PrivateChat::REGISTER_TRANSITION_ASK_KEEP_TELEGRAM_USERNAME => [
-                    'from' => PrivateChat::REGISTER_STATUS_UNREGISTERED,
-                    'to'   => PrivateChat::REGISTER_STATUS_KEEP_TELEGRAM_USERNAME_ASKED
-                ],
-                PrivateChat::REGISTER_TRANSITION_ASK_ENTER_USERNAME => [
-                    'from' => PrivateChat::REGISTER_STATUS_UNREGISTERED,
-                    'to'   => PrivateChat::REGISTER_STATUS_ENTER_USERNAME_ASKED,
-                ],
-                PrivateChat::REGISTER_TRANSISTION_NOT_USING_TELEGRAM_USERNAME => [
-                    'from' => PrivateChat::REGISTER_STATUS_KEEP_TELEGRAM_USERNAME_ASKED,
-                    'to'   => PrivateChat::REGISTER_STATUS_ENTER_USERNAME_ASKED
-                ],
-                PrivateChat::REGISTER_TRANSISTION_USING_TELEGRAM_USERNAME => [
-                    'from' => PrivateChat::REGISTER_STATUS_KEEP_TELEGRAM_USERNAME_ASKED,
-                    'to'   => PrivateChat::REGISTER_STATUS_REGISTERED
-                ],
-                PrivateChat::REGISTER_TRANSITION_ASK_KEEP_ENTERED_USERNAME => [
-                    'from' => PrivateChat::REGISTER_STATUS_ENTER_USERNAME_ASKED,
-                    'to'   => PrivateChat::REGISTER_STATUS_KEEP_ENTERED_USERNAME_ASKED
-                ],
-                PrivateChat::REGISTER_TRANSITION_NOT_KEEPING_ENTERED_USERNAME => [
-                    'from' => PrivateChat::REGISTER_STATUS_KEEP_ENTERED_USERNAME_ASKED,
-                    'to'   => PrivateChat::REGISTER_STATUS_ENTER_USERNAME_ASKED
-                ],
-                PrivateChat::REGISTER_TRANSITION_KEEPING_ENTERED_USERNAME => [
-                    'from' => PrivateChat::REGISTER_STATUS_KEEP_ENTERED_USERNAME_ASKED,
-                    'to'   => PrivateChat::REGISTER_STATUS_REGISTERED
-                ]
-            ]
-        ]);
-        $registerLoader->load($this->registerFsm);
-        $this->registerFsm->initialize();
+        $this->registerFsm = Registration::create($this);
 
         $this->betFsm = new FiniteStateMachine($this);
         $betLoader = new ArrayLoader([
@@ -140,16 +86,18 @@ class PrivateChat extends Model implements ChatInterface
     }
 
     public function handle(Message $message, CommandFactory $commandFactory){
-        if ($this->registerstatus !== PrivateChat::REGISTER_STATUS_UNREGISTERED &&
-        $this->registerstatus !== PrivateChat::REGISTER_STATUS_REGISTERED){
+
+        //user is in registration process
+        if ($this->registerstatus !== Registration::STATUS_UNREGISTERED &&
+        $this->registerstatus !== Registration::STATUS_REGISTERED){
             $command = $commandFactory->createFromString("register");
             /** @var $command RegisterCommand */
-            return $command->handleAnswer($this, $message);
+            return $command->run($this, $message);
         }
         if ($this->betstatus === PrivateChat::BET_STATUS_WAITING_FOR_BET){
             $command = $commandFactory->createFromString("bet");
             /** @var BetCommand $command */
-            return $command->handleAnswer($this, $message);
+            return $command->run($this, $message);
         }
 
     }

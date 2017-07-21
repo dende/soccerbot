@@ -6,9 +6,7 @@ use Analog\Analog;
 use Dende\SoccerBot\Command\CommandFactory;
 use Dende\SoccerBot\Model\ChatFactory;
 use Dende\SoccerBot\Model\FootballApi;
-use Dende\SoccerBot\Model\Match;
-use Dende\SoccerBot\Model\Message;
-use Dende\SoccerBot\Model\TelegramApi;
+use Dende\SoccerBot\Model\Telegram\Api as TelegramApi;
 use Dende\SoccerBot\Repository\ChatRepository;
 use Dende\SoccerBot\Repository\MatchRepository;
 use Dende\SoccerBot\Repository\TeamRepository;
@@ -22,7 +20,7 @@ use Symfony\Component\Translation\MessageSelector;
 class SoccerBot
 {
 	protected $config;
-	/** @var \Dende\SoccerBot\Model\TelegramApi */
+	/** @var \Dende\SoccerBot\Model\Telegram\Api */
 	protected $telegramApi;
     /** @var  \Symfony\Component\Translation\Translator */
 	protected $lang;

@@ -7,7 +7,7 @@ namespace Dende\SoccerBot\Repository;
 use Dende\SoccerBot\Model\ChatInterface;
 use Dende\SoccerBot\Model\GroupChat;
 use Dende\SoccerBot\Model\PrivateChat;
-use Dende\SoccerBot\Model\TelegramApi;
+use Dende\SoccerBot\Model\Telegram\Api as TelegramApi;
 use Symfony\Component\Translation\Translator;
 
 class ChatRepository

@@ -1,5 +1,5 @@
 <?php
-namespace Dende\SoccerBot\Model;
+namespace Dende\SoccerBot\Model\Telegram;
 
 use Symfony\Component\Translation\Translator;
 
@@ -7,9 +7,11 @@ class Message
 {
 
     private $lines;
+    private $replyMarkup;
 
-    function __construct($text = null, $vars = [], $choice = false)
+    function __construct($text = null, $vars = [], $choice = false, $replyMarkup = null)
     {
+        $this->replyMarkup = $replyMarkup;
         $this->lines = [];
         if ($text != null){
             $this->addLine($text, $vars, $choice);
@@ -38,6 +40,10 @@ class Message
     public function addLine($text, $vars = [], $choice = false)
     {
         $this->lines[] = ['text' => $text, 'vars' => $vars, 'choice' => $choice];
+    }
+
+    public function setReplyKeyboardMarkup($replyMarkup){
+
     }
 
 }

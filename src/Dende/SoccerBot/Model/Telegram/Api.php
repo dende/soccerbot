@@ -1,15 +1,15 @@
 <?php
 
 
-namespace Dende\SoccerBot\Model;
+namespace Dende\SoccerBot\Model\Telegram;
 
 
 use Analog\Analog;
+use Dende\SoccerBot\Model\ChatInterface;
 use Symfony\Component\Translation\Translator;
-use Telegram\Bot\Api;
 
 
-class TelegramApi
+class Api
 {
     /** @var Translator */
     private $lang;
@@ -21,11 +21,12 @@ class TelegramApi
     {
         $this->lang = $lang;
         $this->offset = 0;
-        $this->telegram = new Api(TELEGRAM_API_TOKEN);
+        $this->telegram = new \Telegram\Bot\Api(TELEGRAM_API_TOKEN);
     }
 
     public function sendMessage($message, ChatInterface $chat){
         if (!empty($message) && $message instanceof Message){
+
             $this->telegram->sendMessage(['chat_id' => $chat->chat_id, 'text' => $message->translate($this->lang), 'parse_mode' => 'Markdown']);
         }
     }

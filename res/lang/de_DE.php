@@ -36,8 +36,10 @@ return [
             'group' => 'Registrierungen bitte im privaten Chat mit dem Bot durchführen',
             'keepUsername' => 'Dein Benutzername scheint *%username%* zu sein. Möchtest du diesen Benutzernamen auch für die Wettgruppe benutzen?',
             'cantRegister' => 'Registrierung nicht möglich',
+            'alreadyRegistered' => 'Du bist bereits registriert.',
             'transition_ask_name' => 'Bitte gib deinen gewünschten Nutzernamen an:',
-            'success' => 'Registrierung erfolgreich. Dein Nutzername lautet *%username%*.',
+            'keep_entered_username' => 'Möchtest du den Nutzernamen *%username%* registrieren?',
+            'success' => 'Registrierung erfolgreich. Du bist jetzt mit dem Namen *%username%* beim Tippspiel angemeldet.',
             'regex' => 'Der Nutzername darf nur alphanumerische Zeichen enthalten und muss 3-18 Zeichen lang sein.'
         ],
         'bet' => [
