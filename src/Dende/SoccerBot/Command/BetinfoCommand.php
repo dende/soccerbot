@@ -35,7 +35,7 @@ class BetinfoCommand extends AbstractCommand
             }
         }
 
-        $telegram->sendMessage($response, $chat);
+        $telegram->sendMessage($chat, $response);
 
         if ($openMatches->isEmpty()){
             $response = new Message('command.betinfo.noOpen');

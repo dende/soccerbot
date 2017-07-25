@@ -12,6 +12,8 @@ use Dende\SoccerBot\Model\Message;
 use Dende\SoccerBot\Model\PrivateChat;
 use Dende\SoccerBot\Model\Team;
 use Illuminate\Database\Capsule\Manager as Capsule;
+use Illuminate\Support\Collection;
+
 class MatchRepository
 {
     private $footballApi;
@@ -167,12 +169,13 @@ class MatchRepository
             $data = $this->footballApi->fetch($uri);
             foreach ($data["fixtures"] as $fixtureData){
                 $match = new Match();
-                $test = $match->homeTeam();
                 $match->home_team_id = Team::whereName($fixtureData["homeTeamName"])->first()->id;
                 $match->away_team_id = Team::whereName($fixtureData["awayTeamName"])->first()->id;
                 $match->date = new \DateTime($fixtureData["date"]);
                 $match->date->setTimezone(new \DateTimeZone('Europe/Berlin'));
                 $match->status = $fixtureData['status'];
+                if ($match->status == null)
+                    $match->status = Match::STATUS_SCHEDULED;
                 $match->url = array_get($fixtureData, '_links.self.href');
                 $match->save();
             }
@@ -183,16 +186,18 @@ class MatchRepository
     }
 
     public function getOpenMatchesForChat(PrivateChat $chat){
-        $nextMatches = MatchQuery::create()->where('matches.status = ?', Match::STATUS_SCHEDULED)->_or()->where('matches.status = ?', Match::STATUS_TIMED)->orderByDate()->find();
-        $bidMatches  = MatchQuery::create()->useBetQuery()->filterByPrivateChat($chat)->find();
+        $nextMatches = Match::where('status', '=', Match::STATUS_SCHEDULED)->orWhere('status', '=', Match::STATUS_TIMED)->orderBy('date', 'desc')->get();
 
-        $collection = new ObjectCollection();
+        //$bidMatches
+
+        $openMatches = new Collection();
+
         foreach ($nextMatches as $match){
-            if (!$bidMatches->contains($match)){
-                $collection->append($match);
-            }
+            //if (!$bidMatches->contains($match)){
+            $openMatches->push($match);
+            //}
         }
 
-        return $collection;
+        return $openMatches;
     }
 }

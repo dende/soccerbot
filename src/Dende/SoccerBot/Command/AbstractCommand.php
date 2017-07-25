@@ -1,58 +1,41 @@
 <?php
 /**
  * Created by PhpStorm.
- * User: Christian Hartlage
- * Date: 24.06.2016
- * Time: 17:18
+ * User: c
+ * Date: 25.07.17
+ * Time: 15:33
  */
 
 namespace Dende\SoccerBot\Command;
 
 
-use Dende\SoccerBot\Model\ChatInterface;
-use Dende\SoccerBot\Model\GroupChat;
-use Dende\SoccerBot\Model\Message;
-use Dende\SoccerBot\Model\PrivateChat;
-use Dende\SoccerBot\Repository\ChatRepository;
-use Dende\SoccerBot\Repository\MatchRepository;
+use Dende\SoccerBot\Model\Chat;
+use Telegram\Bot\Laravel\Facades\Telegram;
 use Telegram\Bot\Objects\Message as TelegramMessage;
 
-abstract class AbstractCommand
+abstract class AbstractCommand implements CommandInterface
 {
     protected $args;
-    /** @var ChatRepository $chatRepo */
-    protected $chatRepo;
-    /** @var  MatchRepository $matchRepo */
-    protected $matchRepo;
 
-    public function __construct(ChatRepository $chatRepo, MatchRepository $matchRepo)
-    {
-        $this->chatRepo = $chatRepo;
-        $this->matchRepo = $matchRepo;
+    function setArgs($args){
+        $this->args = $args;
     }
 
-    /**
-     * @param ChatInterface $chat
-     * @param TelegramMessage $message
-     * @return Message
-     */
-    public function run(ChatInterface $chat, TelegramMessage $message){
-        if ($chat instanceof PrivateChat){
+    function getArgs(){
+        return $this->args;
+    }
+
+    abstract function runPrivate(Chat $chat, TelegramMessage $message);
+    abstract function runGroup(Chat $chat, TelegramMessage $message);
+
+    function run(Chat $chat, TelegramMessage $message)
+    {
+        if ($chat->isPrivate()){
             return $this->runPrivate($chat, $message);
-        } else if ($chat instanceof GroupChat){
+        } else {
             return $this->runGroup($chat, $message);
         }
     }
 
-    abstract protected function runPrivate(PrivateChat $chat, TelegramMessage $message);
 
-    abstract protected function runGroup(GroupChat $chat, TelegramMessage $message);
-
-    public function setArgs($args){
-        $this->args = $args;
-    }
-
-    public function getArgs(){
-        return $this->args;
-    }
 }

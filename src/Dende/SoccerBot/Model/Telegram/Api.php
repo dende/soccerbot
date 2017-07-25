@@ -24,11 +24,21 @@ class Api
         $this->telegram = new \Telegram\Bot\Api(TELEGRAM_API_TOKEN);
     }
 
-    public function sendMessage($message, ChatInterface $chat){
-        if (!empty($message) && $message instanceof Message){
+    public function sendMessage(ChatInterface $chat, Response $response){
+        $keyboard = $response->getKeyboard();
 
-            $this->telegram->sendMessage(['chat_id' => $chat->chat_id, 'text' => $message->translate($this->lang), 'parse_mode' => 'Markdown']);
+        if (!is_null($keyboard)){
+            $reply_markup = $this->telegram->replyKeyboardMarkup([
+                'keyboard' => $keyboard,
+                'resize_keyboard' => true,
+                'one_time_keyboard' => true
+            ]);
+        } else {
+            $reply_markup = $this->telegram->replyKeyboardHide();
         }
+
+
+        $this->telegram->sendMessage(['chat_id' => $chat->getChatId(), 'text' => $response->getText(), 'parse_mode' => 'Markdown', 'reply_markup' => $reply_markup]);
     }
 
     /**
@@ -52,4 +62,9 @@ class Api
         $this->offset = $offset;
     }
 
+    public function respond(ChatInterface $chat, $response){
+        $update = $chat->getCurrentUpdate();
+        $this->sendMessage($chat, $response);
+        $this->setOffset($update->getUpdateId() + 1);
+    }
 }

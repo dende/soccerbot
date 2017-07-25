@@ -8,7 +8,8 @@
 
 namespace Dende\SoccerBot\Model;
 
-use Finite\StateMachine\StateMachine;
+use Dende\SoccerBot\Command\CommandInterface;
+use Telegram\Bot\Objects\Update;
 
 
 interface ChatInterface
@@ -18,6 +19,7 @@ interface ChatInterface
 
     public function init();
     
-    public function restore();
+    public function restore(Update $update);
 
+    public function getCurrentUpdate(): Update;
 }

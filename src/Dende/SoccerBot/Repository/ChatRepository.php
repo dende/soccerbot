@@ -4,59 +4,92 @@
 namespace Dende\SoccerBot\Repository;
 
 
-use Dende\SoccerBot\Model\ChatInterface;
-use Dende\SoccerBot\Model\GroupChat;
-use Dende\SoccerBot\Model\PrivateChat;
-use Dende\SoccerBot\Model\Telegram\Api as TelegramApi;
+use Dende\SoccerBot\Command\CommandFactory;
+use Dende\SoccerBot\Model\Chat;
+use Dende\SoccerBot\Model\FiniteStateMachine\RegistrationFSM;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Symfony\Component\Translation\Translator;
+use Telegram\Bot\Objects\Update;
 
 class ChatRepository
 {
-    private $telegramApi;
+    /** @var Translator  */
     private $lang;
 
-    public function __construct(TelegramApi $telegramApi, Translator $lang)
+    public function __construct(Translator $lang)
     {
-        $this->telegramApi = $telegramApi;
         $this->lang = $lang;
     }
 
-    public function live(ChatInterface $chat){
-        /** @var $chat GroupChat|PrivateChat */
-        $chat->setLiveticker(true);
+    public function live(Chat $chat){
+        $chat->liveticker = true;
         $chat->save();
     }
 
-    public function mute(ChatInterface $chat){
-        /** @var $chat GroupChat|PrivateChat */
-        $chat->setLiveticker(false);
+    public function mute(Chat $chat){
+        $chat->liveticker = false;
         $chat->save();
     }
 
     /**
-     * @return TelegramApi
-     */
-    public function getTelegramApi(){
-        return $this->telegramApi;
-    }
-
-    /**
-     * @return ChatInterface[]
+     * @return Chat[]
      */
     public function getLivetickerChats()
     {
-        $groupChats = GroupChat::where('liveticker', '=', true)->get();
-        $privateChats = PrivateChat::where('liveticker', '=', true)->get();
+        $chats = Chat::where('liveticker', '=', true)->get();
 
-        return array_merge($groupChats->toArray(), $privateChats->toArray());
+        return $chats;
 
     }
 
-    /**
-     * @return Translator
-     */
-    public function getLang(){
-        return $this->lang;
+    public function createFromUpdate(Update $update){
+
+        $telegramChat = $update->getMessage()->getChat();
+
+        if (is_null($telegramChat))
+            throw new Exception("Chat is empty");
+
+        $chatId = $telegramChat->getId();
+        $chat = null;
+
+
+        try {
+            /** @var Chat $chat */
+            $chat = Chat::where('chat_id', '=', $chatId)->firstOrFail();
+        } catch (ModelNotFoundException $e) {}
+
+        if (!is_null($chat)) {
+            $chat->restore($update);
+            $chat->setLang($this->lang);
+            return $chat;
+        }
+
+        $chatType = $telegramChat->getType();
+
+        $chat = new Chat();
+        $chat->setLang($this->lang);
+        $chat->setCurrentUpdate($update);
+        switch ($chatType){
+            case "group":
+            case "supergroup":
+            case "channel":
+            default:
+                $chat->type = 'group';
+
+                break;
+            case "private":
+                $chat->type = 'private';
+                $chat->registerstatus = RegistrationFSM::STATUS_UNREGISTERED;
+                break;
+        }
+        $chat->chat_id = $telegramChat->getId();
+        $chat->liveticker = false;
+        $chat->init();
+        $chat->save();
+        return $chat;
     }
+
+
+
 
 }

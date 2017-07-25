@@ -5,99 +5,87 @@ namespace Dende\SoccerBot\Command;
 
 
 
-use Dende\SoccerBot\Model\FiniteStateMachine\Registration;
-use Dende\SoccerBot\Model\GroupChat;
-use Dende\SoccerBot\Model\Telegram\Message;
-use Dende\SoccerBot\Model\PrivateChat;
+use Dende\SoccerBot\Model\Chat;
+use Dende\SoccerBot\Model\FiniteStateMachine\RegistrationFSM;
+use Dende\SoccerBot\Model\Telegram\Response;
 use Telegram\Bot\Objects\Message as TelegramMessage;
 
 class RegisterCommand extends AbstractCommand
 {
 
     //TODO: Check duplicate usernames
-    protected function runPrivate(PrivateChat $chat, TelegramMessage $message)
+     function runPrivate(Chat $chat, TelegramMessage $message)
     {
-        $fsm = $chat->getRegisterFsm();
-        $chatRepo = $this->chatRepo;
-        $lang     = $chatRepo->getLang();
-        $telegram = $this->chatRepo->getTelegramApi()->getTelegram();
-
 
         $username = $message->getChat()->getUsername();
-
+        $lang = $chat->getLang();
         $fsm = $chat->getRegisterFsm();
         $currentRegisterState = $fsm->getCurrentState()->getName();
 
         switch($currentRegisterState){
-            case Registration::STATUS_UNREGISTERED:
+            case RegistrationFSM::STATUS_UNREGISTERED:
                 if (empty($username)) {
-                    $response = new Message("command.register.transition_ask_name");
-                    $fsm->apply(Registration::TRANSITION_ASK_ENTER_USERNAME);
+                    $response = new Response("command.register.transition_ask_name");
+                    $fsm->apply(RegistrationFSM::TRANSITION_ASK_ENTER_USERNAME);
                 } else {
-
                     $keyboard = [
                         [$lang->trans('general.yes'), $lang->trans('general.no')],
                     ];
-
-                    $reply_markup = $telegram->replyKeyboardMarkup([
-                        'keyboard' => $keyboard,
-                        'resize_keyboard' => true,
-                        'one_time_keyboard' => true
-                    ]);
-
-                    $response = new Message('command.register.keepUsername', ['%username%' => $username], false, $reply_markup);
-
-                    $fsm->apply(Registration::TRANSITION_ASK_KEEP_TELEGRAM_USERNAME);
+                    $response = new Response($lang->trans('command.register.keepUsername', ['%username%' => $username]), $keyboard);
+                    $fsm->apply(RegistrationFSM::TRANSITION_ASK_KEEP_TELEGRAM_USERNAME);
                 }
                 break;
-            case Registration::STATUS_KEEP_TELEGRAM_USERNAME_ASKED:
+            case RegistrationFSM::STATUS_KEEP_TELEGRAM_USERNAME_ASKED:
                 switch($message->getText()) {
                     case $lang->trans('general.yes'):
                         $chat->username = $message->getChat()->getUsername();
-                        $fsm->apply(Registration::TRANSISTION_USING_TELEGRAM_USERNAME);
-                        $response = new Message('command.register.success', ['%username%' => $chat->username]);
+                        $fsm->apply(RegistrationFSM::TRANSISTION_USING_TELEGRAM_USERNAME);
+                        $response = new Response($lang->trans('command.register.success', ['%username%' => $chat->username]));
                         break;
                     case $lang->trans('general.no'):
-                        $fsm->apply(Registration::TRANSISTION_NOT_USING_TELEGRAM_USERNAME);
-                        $response = new Message("command.register.transition_ask_name");
+                        $fsm->apply(RegistrationFSM::TRANSISTION_NOT_USING_TELEGRAM_USERNAME);
+                        $response = new Response($lang->trans("command.register.transition_ask_name"));
                         break;
                     default:
-                        $response = new Message('general.yesOrNoPls');
+                        $response = new Response($lang->trans('general.yesOrNoPls'));
                         break;
                 }
                 break;
-            case Registration::STATUS_ENTER_USERNAME_ASKED:
+            case RegistrationFSM::STATUS_ENTER_USERNAME_ASKED:
                 $username = $message->getText();
-                if (preg_match(Registration::REGEX_USERNAME, $username)){
+                if (preg_match(RegistrationFSM::REGEX_USERNAME, $username)){
                     $chat->username = $username;
-                    $fsm->apply(Registration::TRANSITION_ASK_KEEP_ENTERED_USERNAME);
-                    $response = new Message('command.register.keep_entered_username', ['%username%' => $chat->username]);
+                    $fsm->apply(RegistrationFSM::TRANSITION_ASK_KEEP_ENTERED_USERNAME);
+                    $keyboard = [
+                        [$lang->trans('general.yes'), $lang->trans('general.no')],
+                    ];
+                    $response = new Response($lang->trans('command.register.keep_entered_username', ['%username%' => $chat->username]), $keyboard);
                 } else {
-                    $response = new Message('command.register.regex');
+                    $response = new Response($lang->trans('command.register.regex'));
                 }
                 break;
 
-            case Registration::STATUS_KEEP_ENTERED_USERNAME_ASKED:
+            case RegistrationFSM::STATUS_KEEP_ENTERED_USERNAME_ASKED:
                 switch($message->getText()) {
                     case $lang->trans('general.yes'):
                         $chat->username;
-                        $fsm->apply(Registration::TRANSITION_KEEPING_ENTERED_USERNAME);
-                        $response = new Message('command.register.success', ['%username%' => $chat->username]);
+                        $fsm->apply(RegistrationFSM::TRANSITION_KEEPING_ENTERED_USERNAME);
+                        $response = new Response($lang->trans('command.register.success', ['%username%' => $chat->username]));
                         break;
                     case $lang->trans('general.no'):
-                        $fsm->apply(Registration::TRANSITION_NOT_KEEPING_ENTERED_USERNAME);
-                        $response = new Message("command.register.transition_ask_name");
+                        $fsm->apply(RegistrationFSM::TRANSITION_NOT_KEEPING_ENTERED_USERNAME);
+                        $response = new Response($lang->trans("command.register.transition_ask_name"));
                         break;
                     default:
-                        $response = new Message('general.yesOrNoPls');
+                        $response = new Response($lang->trans('general.yesOrNoPls'));
                         break;
                 }
                 break;
-            case Registration::STATUS_REGISTERED:
-                $response = new Message('command.register.alreadyRegistered');
+            case RegistrationFSM::STATUS_REGISTERED:
+                $response = new Response($lang->trans('command.register.alreadyRegistered'));
             break;
             default:
-                $response = new Message('command.register.cantRegister');
+                $response = new Response($lang->trans('command.register.cantRegister'));
                 break;
 
         }
@@ -108,8 +96,9 @@ class RegisterCommand extends AbstractCommand
     }
 
 
-    protected function runGroup(GroupChat $chat, TelegramMessage $message)
+    function runGroup(Chat $chat, TelegramMessage $message)
     {
-        return new Message('command.register.group');
+        return new Response($chat->getLang()->trans('command.register.group'));
     }
+
 }

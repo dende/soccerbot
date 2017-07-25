@@ -4,23 +4,14 @@
 namespace Dende\SoccerBot\Command;
 
 
-use Dende\SoccerBot\Model\GroupChat;
-use Dende\SoccerBot\Model\Message;
-use Dende\SoccerBot\Model\PrivateChat;
+use Dende\SoccerBot\Model\Chat;
+use Dende\SoccerBot\Model\Telegram\Response;
 use Telegram\Bot\Objects\Message as TelegramMessage;
 
 class NoopCommand extends AbstractCommand
-
 {
-    protected function runPrivate(PrivateChat $chat, TelegramMessage $message){
-        return $this->runBoth();
-    }
 
-    protected function runGroup(GroupChat $chat, TelegramMessage $message){
-        return $this->runBoth();
-    }
-
-    private function runBoth(){
+    function run(Chat $chat, TelegramMessage $message){
         switch ($this->args){
             case null:
             case "start":
@@ -29,7 +20,16 @@ class NoopCommand extends AbstractCommand
             default:
                 break;
         }
-        return new Message('command.noop', ['%command%' => $this->args]);
+        return new Response('command.noop', ['%command%' => $this->args]);
     }
 
+    function runGroup(Chat $chat, TelegramMessage $message)
+    {
+        // TODO: Implement runGroup() method.
+    }
+
+    function runPrivate(Chat $chat, TelegramMessage $message)
+    {
+        // TODO: Implement runPrivate() method.
+    }
 }

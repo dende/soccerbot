@@ -2,7 +2,7 @@
 
 use Phinx\Migration\AbstractMigration;
 
-class GroupChatMigration extends AbstractMigration
+class ChatMigration extends AbstractMigration
 {
     /**
      * Change Method.
@@ -27,10 +27,15 @@ class GroupChatMigration extends AbstractMigration
      */
     public function change()
     {
-        $table = $this->table('groupchats');
+        $table = $this->table('chats');
         $table->addColumn('chat_id', 'integer')
+            ->addColumn('username', 'string')
             ->addColumn('type', 'string')
             ->addColumn('liveticker', 'boolean')
+            ->addColumn('registerstatus', 'string')
+            ->addColumn('betstatus', 'string')
+            ->addColumn('current_bet_match_id', 'integer')
+            ->addForeignKey('current_bet_match_id', 'matches')
             ->addIndex(['chat_id'], ['unique' => true])
             ->create();
     }
