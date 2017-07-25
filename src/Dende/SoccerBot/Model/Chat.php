@@ -2,12 +2,8 @@
 
 namespace Dende\SoccerBot\Model;
 
-use Dende\SoccerBot\Command\BetCommand;
-use Dende\SoccerBot\Command\CommandFactory;
-use Dende\SoccerBot\Command\CommandInterface;
-use Dende\SoccerBot\Command\RegisterCommand;
-use Dende\SoccerBot\Model\FiniteStateMachine\BetFSM;
-use Dende\SoccerBot\Model\FiniteStateMachine\RegistrationFSM;
+use Dende\SoccerBot\FiniteStateMachine\BetFSM;
+use Dende\SoccerBot\FiniteStateMachine\RegistrationFSM;
 use Finite\StateMachine\StateMachine as FiniteStateMachine;
 use Illuminate\Database\Eloquent\Model;
 use Symfony\Component\Translation\Translator;
@@ -90,7 +86,7 @@ class Chat extends Model implements ChatInterface
     /**
      * @return mixed
      */
-    public function getCurrentUpdate()
+    public function getCurrentUpdate(): Update
     {
         return $this->currentUpdate;
     }

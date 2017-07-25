@@ -6,26 +6,28 @@ namespace Dende\SoccerBot\Repository;
 
 use Analog\Analog;
 use Carbon\Carbon;
-use Dende\SoccerBot\Model\FootballApi;
+use Dende\SoccerBot\FootballData\Api as FootballDataApi;
+use Dende\SoccerBot\Model\ChatInterface;
 use Dende\SoccerBot\Model\Match;
-use Dende\SoccerBot\Model\Message;
-use Dende\SoccerBot\Model\PrivateChat;
+use Dende\SoccerBot\Telegram\Message as TelegramMessage;
+use Dende\SoccerBot\Model\Chat;
 use Dende\SoccerBot\Model\Team;
+use Dende\SoccerBot\Telegram\Response;
 use Illuminate\Database\Capsule\Manager as Capsule;
 use Illuminate\Support\Collection;
 
 class MatchRepository
 {
-    private $footballApi;
+    private $footballDataApi;
 
-    public function __construct(FootballApi $footballApi)
+    public function __construct(FootballDataApi $footballApi)
     {
-        $this->footballApi = $footballApi;
+        $this->footballDataApi = $footballApi;
         $this->init();
     }
 
     /**
-     * @return Message[]
+     * @return array
      */
     public function update(){
         Analog::log("Updating matches");
@@ -57,7 +59,7 @@ class MatchRepository
                 }
 
                 if (!is_null($info)){
-                    $message = new Message();
+                    $message = new Response();
 
                     $homeTeam = $match->getHomeTeam();
                     $awayTeam = $match->getAwayTeam();
@@ -129,7 +131,7 @@ class MatchRepository
 
     private function updateMatch(Match $match){
         $newData = [];
-        $data = $this->footballApi->fetch($match->getUrl());
+        $data = $this->footballDataApi->fetch($match->getUrl());
         $matchData = $data["fixture"];
 
         $oldStatus        = $match->getStatus();
@@ -160,13 +162,13 @@ class MatchRepository
     public function init(){
         $matchCount = Capsule::table('matches')->count();
 
-        $rootData = $this->footballApi->getRootData();
+        $rootData = $this->footballDataApi->getRootData();
         if ($matchCount < $rootData["numberOfGames"]){
             $uri = array_get($rootData, '_links.fixtures.href');
             if (empty($uri)){
                 Analog::log('No Fixtures found', Analog::CRITICAL);
             }
-            $data = $this->footballApi->fetch($uri);
+            $data = $this->footballDataApi->fetch($uri);
             foreach ($data["fixtures"] as $fixtureData){
                 $match = new Match();
                 $match->home_team_id = Team::whereName($fixtureData["homeTeamName"])->first()->id;
@@ -185,7 +187,7 @@ class MatchRepository
         }
     }
 
-    public function getOpenMatchesForChat(PrivateChat $chat){
+    public function getOpenMatchesForChat(ChatInterface $chat){
         $nextMatches = Match::where('status', '=', Match::STATUS_SCHEDULED)->orWhere('status', '=', Match::STATUS_TIMED)->orderBy('date', 'desc')->get();
 
         //$bidMatches

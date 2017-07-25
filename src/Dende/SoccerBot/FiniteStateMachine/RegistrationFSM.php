@@ -1,6 +1,6 @@
 <?php
 
-namespace Dende\SoccerBot\Model\FiniteStateMachine;
+namespace Dende\SoccerBot\FiniteStateMachine;
 use Dende\SoccerBot\Model\Chat;
 use Finite\Loader\ArrayLoader;
 use Finite\StateMachine\StateMachine as FiniteStateMachine;

@@ -10,46 +10,15 @@ namespace Dende\SoccerBot\Command;
 
 
 use Dende\SoccerBot\Model\Bet;
-use Dende\SoccerBot\Model\FiniteStateMachine\RegistrationFSM;
+use Dende\SoccerBot\FiniteStateMachine\RegistrationFSM;
 use Dende\SoccerBot\Model\Chat;
 use Dende\SoccerBot\Model\Match;
-use Dende\SoccerBot\Model\Telegram\Response;
+use Dende\SoccerBot\Telegram\Response;
 use Telegram\Bot\Objects\Message as TelegramMessage;
 
 class BetCommand extends AbstractCommand
 {
-     function run(Chat $chat, TelegramMessage $message){
-        if ($chat->registerstatus !== RegistrationFSM::STATUS_REGISTERED){
-            return new Response('command.bet.register');
-        }
-
-        $openMatches = $this->matchRepo->getOpenMatchesForChat($chat);
-
-        if ($openMatches->isEmpty()){
-            return new Response('command.bet.noMatches');
-        }
-
-        /** @var Match $match */
-        $match = $openMatches->first();
-
-        $fsm = $chat->getBetFsm();
-        $fsm->apply(BetFsm::TRANSITION_ASK_GOALS);
-
-        $chat->current_bet_match_id = $match->id;
-        $chat->save();
-
-        $homeTeam = $match->homeTeam()->get();
-        $awayTeam = $match->awayTeam()->get();
-
-        return new Response('command.bet.yourBet', [
-            '%homeTeamName%' => $homeTeam->getName(),
-            '%awayTeamName%' => $awayTeam->getName(),
-            '%date%' => $match->getDate('m.d.'),
-        ]);
-
-    }
-
-    protected function runGroup(GroupChat $chat, TelegramMessage $message){
+    public function runGroup(Chat $chat, TelegramMessage $message){
         return new Response('command.bet.group');
     }
 
@@ -103,5 +72,36 @@ class BetCommand extends AbstractCommand
 
         $chat->save();
         return $response;
+    }
+
+    function runPrivate(Chat $chat, TelegramMessage $message)
+    {
+        if ($chat->registerstatus !== RegistrationFSM::STATUS_REGISTERED){
+            return new Response('command.bet.register');
+        }
+
+        $openMatches = $this->matchRepo->getOpenMatchesForChat($chat);
+
+        if ($openMatches->isEmpty()){
+            return new Response('command.bet.noMatches');
+        }
+
+        /** @var Match $match */
+        $match = $openMatches->first();
+
+        $fsm = $chat->getBetFsm();
+        $fsm->apply(BetFsm::TRANSITION_ASK_GOALS);
+
+        $chat->current_bet_match_id = $match->id;
+        $chat->save();
+
+        $homeTeam = $match->homeTeam()->get();
+        $awayTeam = $match->awayTeam()->get();
+
+        return new Response('command.bet.yourBet', [
+            '%homeTeamName%' => $homeTeam->getName(),
+            '%awayTeamName%' => $awayTeam->getName(),
+            '%date%' => $match->getDate('m.d.'),
+        ]);
     }
 }

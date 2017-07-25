@@ -5,8 +5,8 @@ namespace Dende\SoccerBot;
 use Analog\Analog;
 use Dende\SoccerBot\Command\ResponseFactory;
 use Dende\SoccerBot\Command\CommandFactory;
-use Dende\SoccerBot\Model\FootballApi;
-use Dende\SoccerBot\Model\Telegram\Api as TelegramApi;
+use Dende\SoccerBot\FootballData\Api as FootballDataApi;
+use Dende\SoccerBot\Telegram\Api as TelegramApi;
 use Dende\SoccerBot\Repository\ChatRepository;
 use Dende\SoccerBot\Repository\MatchRepository;
 use Dende\SoccerBot\Repository\TeamRepository;
@@ -20,7 +20,7 @@ use Symfony\Component\Translation\MessageSelector;
 class SoccerBot
 {
 	protected $config;
-	/** @var \Dende\SoccerBot\Model\Telegram\Api */
+	/** @var \Dende\SoccerBot\Telegram\Api */
 	protected $telegramApi;
     /** @var  \Symfony\Component\Translation\Translator */
 	protected $lang;
@@ -30,8 +30,8 @@ class SoccerBot
     protected $teamRepo;
     /** @var ChatRepository */
     protected $chatRepo;
-    /** @var FootballApi */
-    protected $footballApi;
+    /** @var FootballDataApi */
+    protected $footballDataApi;
     /** @var  CommandFactory */
     protected $commandFactory;
     /** @var ResponseFactory */
@@ -45,9 +45,9 @@ class SoccerBot
         $this->lang->addResource('php', __DIR__ . '/../../../res/lang/de_DE.php', 'de_DE');
         Analog::handler(\Analog\Handler\Stderr::init());
         $this->telegramApi = new TelegramApi($this->lang);
-        $this->footballApi = new FootballApi();
-        $this->teamRepo = new TeamRepository($this->footballApi);
-        $this->matchRepo = new MatchRepository($this->footballApi);
+        $this->footballDataApi = new FootballDataApi();
+        $this->teamRepo = new TeamRepository($this->footballDataApi);
+        $this->matchRepo = new MatchRepository($this->footballDataApi);
         $this->commandFactory = new CommandFactory();
         $this->chatRepo = new ChatRepository($this->lang);
         $this->responseFactory = new ResponseFactory($this->commandFactory);

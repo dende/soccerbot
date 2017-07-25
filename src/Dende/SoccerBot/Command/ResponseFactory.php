@@ -10,9 +10,9 @@ namespace Dende\SoccerBot\Command;
 
 
 use Dende\SoccerBot\Model\Chat;
-use Dende\SoccerBot\Model\FiniteStateMachine\BetFSM;
-use Dende\SoccerBot\Model\FiniteStateMachine\RegistrationFSM;
-use Dende\SoccerBot\Model\Telegram\Response;
+use Dende\SoccerBot\FiniteStateMachine\BetFSM;
+use Dende\SoccerBot\FiniteStateMachine\RegistrationFSM;
+use Dende\SoccerBot\Telegram\Response;
 
 class ResponseFactory
 {

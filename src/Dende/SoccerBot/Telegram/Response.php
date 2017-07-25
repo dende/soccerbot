@@ -1,5 +1,5 @@
 <?php
-namespace Dende\SoccerBot\Model\Telegram;
+namespace Dende\SoccerBot\Telegram;
 
 use Symfony\Component\Translation\Translator;
 

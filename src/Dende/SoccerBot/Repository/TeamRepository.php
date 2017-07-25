@@ -6,14 +6,14 @@ namespace Dende\SoccerBot\Repository;
 
 use Analog\Analog;
 use Dende\SoccerBot\Model\Team;
-use Dende\SoccerBot\Model\FootballApi;
+use Dende\SoccerBot\FootballData\Api as FootballDataApi;
 use Illuminate\Database\Capsule\Manager as Capsule;
 
 class TeamRepository
 {
     private $footballApi;
 
-    public function __construct(FootballApi $footballApi)
+    public function __construct(FootballDataApi $footballApi)
     {
         $this->footballApi = $footballApi;
         $this->init();

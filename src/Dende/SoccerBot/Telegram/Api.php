@@ -1,7 +1,7 @@
 <?php
 
 
-namespace Dende\SoccerBot\Model\Telegram;
+namespace Dende\SoccerBot\Telegram;
 
 
 use Analog\Analog;

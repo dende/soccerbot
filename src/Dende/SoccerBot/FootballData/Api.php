@@ -1,11 +1,11 @@
 <?php
 
 
-namespace Dende\SoccerBot\Model;
+namespace Dende\SoccerBot\FootballData;
 
 
 
-class FootballApi
+class Api
 {
     private $client;
     private $header;
