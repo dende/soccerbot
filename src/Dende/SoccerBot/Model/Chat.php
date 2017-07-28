@@ -31,7 +31,6 @@ class Chat extends Model implements ChatInterface
 
     protected $currentUpdate;
 
-
     protected $table = 'chats';
     public $timestamps = false;
 
@@ -59,6 +58,7 @@ class Chat extends Model implements ChatInterface
 
     public function restore(Update $update){
         $this->setCurrentUpdate($update);
+        $registerstatus = $this->registerstatus;
         $this->init();
         //TODO: logic for restoring should go here
     }
@@ -99,4 +99,27 @@ class Chat extends Model implements ChatInterface
         $this->currentUpdate = $currentUpdate;
     }
 
+    public function currentBetMatch(){
+        return $this->belongsTo('\Dende\SoccerBot\Model\Match', 'current_bet_match_id');
+    }
+
+    public function getBetstatus()
+    {
+        return $this->betstatus;
+    }
+
+    public function setBetstatus($betstatus)
+    {
+        $this->betstatus = $betstatus;
+    }
+
+    public function getRegisterstatus()
+    {
+        return $this->registerstatus;
+    }
+
+    public function setRegisterstatus($registerstatus)
+    {
+        $this->registerstatus = $registerstatus;
+    }
 }

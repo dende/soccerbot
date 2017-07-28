@@ -15,11 +15,23 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Bet extends Model
 {
+
+    const REGEX_BET = '/^[0-9]{1,2}:[0-9]{1,2}$/';
+    const INPUT_STOP = 'STOP';
+
     protected $tabletable = "bets";
     public $timestamps = false;
 
     public function getBetString()
     {
-        return $this->getHomeTeamGoals() . ':' . $this->getAwayTeamGoals();
+        return $this->home_team_goals . ':' . $this->away_team_goals;
+    }
+
+    public function match(){
+        return $this->belongsTo('\Dende\SoccerBot\Model\Match');
+    }
+
+    public function chat(){
+        return $this->belongsTo('\Dende\SoccerBot\Model\Chat');
     }
 }

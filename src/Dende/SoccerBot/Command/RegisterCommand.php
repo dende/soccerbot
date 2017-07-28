@@ -6,8 +6,8 @@ namespace Dende\SoccerBot\Command;
 
 
 use Dende\SoccerBot\Model\Chat;
-use Dende\SoccerBot\Model\FiniteStateMachine\RegistrationFSM;
-use Dende\SoccerBot\Model\Telegram\Response;
+use Dende\SoccerBot\FiniteStateMachine\RegistrationFSM;
+use Dende\SoccerBot\Telegram\Response;
 use Telegram\Bot\Objects\Message as TelegramMessage;
 
 class RegisterCommand extends AbstractCommand
@@ -82,7 +82,7 @@ class RegisterCommand extends AbstractCommand
                 }
                 break;
             case RegistrationFSM::STATUS_REGISTERED:
-                $response = new Response($lang->trans('command.register.alreadyRegistered'));
+                $response = new Response($lang->trans('command.register.alreadyRegistered', ['%username%' => $chat->username]));
             break;
             default:
                 $response = new Response($lang->trans('command.register.cantRegister'));

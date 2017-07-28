@@ -25,6 +25,12 @@ class Api
     }
 
     public function sendMessage(ChatInterface $chat, Response $response){
+
+        if ($response->isEmpty()){
+            Analog::log('not sending an empty Message', Analog::WARNING);
+            return;
+        }
+
         $keyboard = $response->getKeyboard();
 
         if (!is_null($keyboard)){
@@ -62,7 +68,7 @@ class Api
         $this->offset = $offset;
     }
 
-    public function respond(ChatInterface $chat, $response){
+    public function respond(ChatInterface $chat, Response $response){
         $update = $chat->getCurrentUpdate();
         $this->sendMessage($chat, $response);
         $this->setOffset($update->getUpdateId() + 1);

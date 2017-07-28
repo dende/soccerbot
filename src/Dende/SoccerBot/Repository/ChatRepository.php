@@ -4,9 +4,8 @@
 namespace Dende\SoccerBot\Repository;
 
 
-use Dende\SoccerBot\Command\CommandFactory;
 use Dende\SoccerBot\Model\Chat;
-use Dende\SoccerBot\Model\FiniteStateMachine\RegistrationFSM;
+use Dende\SoccerBot\FiniteStateMachine\RegistrationFSM;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Symfony\Component\Translation\Translator;
 use Telegram\Bot\Objects\Update;

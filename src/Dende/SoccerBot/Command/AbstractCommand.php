@@ -10,12 +10,17 @@ namespace Dende\SoccerBot\Command;
 
 
 use Dende\SoccerBot\Model\Chat;
-use Telegram\Bot\Laravel\Facades\Telegram;
+use Dende\SoccerBot\Repository\MatchRepository;
+use Dende\SoccerBot\Repository\TeamRepository;
 use Telegram\Bot\Objects\Message as TelegramMessage;
 
 abstract class AbstractCommand implements CommandInterface
 {
     protected $args;
+    /** @var  MatchRepository */
+    protected $matchRepo;
+    /** @var  TeamRepository */
+    protected $teamRepo;
 
     function setArgs($args){
         $this->args = $args;
@@ -35,6 +40,15 @@ abstract class AbstractCommand implements CommandInterface
         } else {
             return $this->runGroup($chat, $message);
         }
+    }
+
+    function setMatchRepo(MatchRepository $matchRepo)
+    {
+        $this->matchRepo = $matchRepo;
+    }
+
+    function setTeamRepo(TeamRepository $teamRepo){
+        $this->teamRepo = $teamRepo;
     }
 
 

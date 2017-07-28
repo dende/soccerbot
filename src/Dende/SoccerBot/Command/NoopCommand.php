@@ -5,7 +5,7 @@ namespace Dende\SoccerBot\Command;
 
 
 use Dende\SoccerBot\Model\Chat;
-use Dende\SoccerBot\Model\Telegram\Response;
+use Dende\SoccerBot\Telegram\Response;
 use Telegram\Bot\Objects\Message as TelegramMessage;
 
 class NoopCommand extends AbstractCommand

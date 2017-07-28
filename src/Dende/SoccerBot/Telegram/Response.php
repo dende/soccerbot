@@ -9,7 +9,7 @@ class Response
     private $lines;
     private $keyboard;
 
-    function __construct($text = null, $keyboard = null)
+    function __construct($text = "", $keyboard = null)
     {
         $this->keyboard = $keyboard;
         $this->lines = [];
@@ -39,5 +39,9 @@ class Response
             $text .= $line . "\n";
         }
         return $text;
+    }
+
+    function isEmpty(){
+        return empty($this->lines);
     }
 }

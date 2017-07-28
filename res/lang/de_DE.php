@@ -36,20 +36,22 @@ return [
             'group' => 'Registrierungen bitte im privaten Chat mit dem Bot durchführen',
             'keepUsername' => 'Dein Benutzername scheint *%username%* zu sein. Möchtest du diesen Benutzernamen auch für die Wettgruppe benutzen?',
             'cantRegister' => 'Registrierung nicht möglich',
-            'alreadyRegistered' => 'Du bist bereits registriert.',
+            'alreadyRegistered' => 'Du bist bereits registriert, dein Nutzername lautet *%username%*.',
             'transition_ask_name' => 'Bitte gib deinen gewünschten Nutzernamen an:',
             'keep_entered_username' => 'Möchtest du den Nutzernamen *%username%* registrieren?',
             'success' => 'Registrierung erfolgreich. Du bist jetzt mit dem Namen *%username%* beim Tippspiel angemeldet.',
             'regex' => 'Der Nutzername darf nur alphanumerische Zeichen enthalten und muss 3-18 Zeichen lang sein.'
         ],
         'bet' => [
-            'register' => 'Bitte zuerst registrieren. Dazu /register benutzen.',
+            'register'  => 'Bitte zuerst registrieren. Dazu /register benutzen.',
             'noMatches' => 'Es gibt keine Spiele zu denen du tippen kannst.',
-            'yourBet' => 'Das Spiel %homeTeamName% gegen %awayTeamName% findet am %date% statt. Welches Ergebnis tippst du?',
-            'group' => 'Tipps bitte im privaten Chat abgeben',
-            'regex' => "Tipps bitte im Format XX:YY abgeben.\n(z.B. 3:2 oder 11:0)",
-            'done' => 'Es gibt keine weiteren Spiele für die du Tipps abgeben kannst',
-            'info' => 'Dein Tipp für das Spiel %homeTeamName% gegen %awayTeamName% lautet: *%bet%*'
+            'yourBet'   => 'Das Spiel %homeTeamName% gegen %awayTeamName% findet am %date% statt. Welches Ergebnis tippst du?',
+            'group'     => 'Tipps bitte im privaten Chat abgeben',
+            'regex'     => "Tipps bitte im Format XX:YY abgeben.\n(z.B. 3:2 oder 11:0), oder STOP schreiben",
+            'done'      => 'Es gibt keine weiteren Spiele für die du Tipps abgeben kannst',
+            'info'      => 'Dein Tipp für das Spiel %homeTeamName% gegen %awayTeamName% lautet: *%bet%*',
+            'stopped'   => 'Du hast die Tippeingabe unterbrochen. Es gibt noch *%num%* spiele auf die du tippen kannst.',
+            'failed'    => 'Das Anlegen der Wette hat nicht funktioniert, probier es bitte nochmal oder schreib STOP'
         ],
         'betinfo' => [
             'nothing' => 'Zur Zeit gibt es keine Spiele, auf die getippt werden kann.',

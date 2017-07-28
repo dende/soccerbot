@@ -4,15 +4,19 @@ namespace Dende\SoccerBot\Command;
 
 
 use Dende\SoccerBot\Model\Base\BetQuery;
+use Dende\SoccerBot\Model\Chat;
 use Dende\SoccerBot\Model\GroupChat;
 use Dende\SoccerBot\Model\Match;
 use Dende\SoccerBot\Model\Message;
 use Dende\SoccerBot\Model\PrivateChat;
+use Dende\SoccerBot\Telegram\Response;
 use Telegram\Bot\Objects\Message as TelegramMessage;
 
 class BetinfoCommand extends AbstractCommand
 {
-    protected function runPrivate(PrivateChat $chat, TelegramMessage $message){
+    function runPrivate(Chat $chat, TelegramMessage $message){
+
+        /*
         $openMatches = $this->matchRepo->getOpenMatchesForChat($chat);
         $bets = BetQuery::create()->filterByPrivateChat($chat)->find();
 
@@ -41,7 +45,7 @@ class BetinfoCommand extends AbstractCommand
             $response = new Message('command.betinfo.noOpen');
         } else {
             $response = new Message('command.betinfo.followingOpen');
-            /** @var Match $match */
+            /** @var Match $match
             foreach ($openMatches as $match){
                 $response->addLine('command.betinfo.open',[
                     '%homeTeamName%' => $match->getHomeTeam()->getName(),
@@ -51,9 +55,12 @@ class BetinfoCommand extends AbstractCommand
             }
         }
         return $response;
+
+        */
+        return new Response();
     }
 
-    protected function runGroup(GroupChat $chat, TelegramMessage $message){
+    function runGroup(Chat $chat, TelegramMessage $message){
         return new Message('command.bet.group');
     }
 

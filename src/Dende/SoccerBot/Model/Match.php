@@ -31,6 +31,11 @@ class Match extends Model
         'away_team_goals' => 0
     ];
 
+    protected $dates = [
+        'date'
+    ];
+
+
     public function homeTeam(){
         return $this->belongsTo('\Dende\SoccerBot\Model\Team', 'home_team_id');
     }
@@ -39,5 +44,7 @@ class Match extends Model
         return $this->belongsTo('\Dende\SoccerBot\Model\Team', 'away_team_id');
     }
 
-
+    public function bets(){
+        return $this->hasMany('Bet');
+    }
 }

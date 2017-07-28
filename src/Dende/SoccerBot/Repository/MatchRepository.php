@@ -191,12 +191,12 @@ class MatchRepository
         $nextMatches = Match::where('status', '=', Match::STATUS_SCHEDULED)->orWhere('status', '=', Match::STATUS_TIMED)->orderBy('date', 'desc')->get();
 
         //$bidMatches
-
+        //todo exclude matches that are already in bets
         $openMatches = new Collection();
 
         foreach ($nextMatches as $match){
             //if (!$bidMatches->contains($match)){
-            $openMatches->push($match);
+            $openMatches->prepend($match);
             //}
         }
 

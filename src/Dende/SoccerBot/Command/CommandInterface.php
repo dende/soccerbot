@@ -10,6 +10,8 @@ namespace Dende\SoccerBot\Command;
 
 
 use Dende\SoccerBot\Model\Chat;
+use Dende\SoccerBot\Repository\MatchRepository;
+use Dende\SoccerBot\Repository\TeamRepository;
 use Telegram\Bot\Objects\Message as TelegramMessage;
 
 interface CommandInterface
@@ -20,4 +22,8 @@ interface CommandInterface
     function setArgs($args);
 
     function getArgs();
+
+    function setMatchRepo(MatchRepository $matchRepo);
+
+    function setTeamRepo(TeamRepository $teamRepo);
 }
