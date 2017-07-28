@@ -48,9 +48,9 @@ class SoccerBot
         $this->footballDataApi = new FootballDataApi();
         $this->teamRepo = new TeamRepository($this->footballDataApi);
         $this->matchRepo = new MatchRepository($this->footballDataApi);
-        $this->commandFactory = new CommandFactory();
+        $this->commandFactory = new CommandFactory($this->matchRepo, $this->teamRepo);
         $this->chatRepo = new ChatRepository($this->lang);
-        $this->responseFactory = new ResponseFactory($this->commandFactory, $this->matchRepo, $this->teamRepo);
+        $this->responseFactory = new ResponseFactory($this->commandFactory);
 	}
 
 	function run(){

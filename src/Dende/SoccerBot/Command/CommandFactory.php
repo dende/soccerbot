@@ -4,6 +4,8 @@
 namespace Dende\SoccerBot\Command;
 
 use Dende\SoccerBot\Exception\InvalidCommandStringException;
+use Dende\SoccerBot\Repository\MatchRepository;
+use Dende\SoccerBot\Repository\TeamRepository;
 use \Telegram\Bot\Objects\Message as TelegramMessage;
 use \Analog\Analog;
 use Telegram\Bot\Objects\Update;
@@ -12,24 +14,47 @@ use Telegram\Bot\Objects\Update;
 class CommandFactory
 {
 
+    /** @var MatchRepository */
+    private $matchRepo;
+    /** @var TeamRepository */
+    private $teamRepo;
+
+    public function __construct(MatchRepository $matchRepo, TeamRepository $teamRepo)
+    {
+        $this->matchRepo = $matchRepo;
+        $this->teamRepo  = $teamRepo;
+    }
 
     public function createFromString($commandString, $args = []){
 
 
         $classname = 'Dende\\SoccerBot\\Command\\'. ucfirst($commandString . 'Command');
         if (class_exists($classname, true)){
-            /** @var AbstractCommand $instance */
-            $instance = new $classname();
-            $instance->setArgs($args);
+            /** @var AbstractCommand $command */
+            $command = new $classname();
+            $command->setArgs($args);
         } else {
             Analog::log("Command $classname not found", Analog::WARNING);
-            $instance = new NoopCommand();
-            $instance->setArgs($commandString);
+            $command = new NoopCommand();
+            $command->setArgs($commandString);
         }
-        return $instance;
+
+        // we have a command, give it its necessary repos
+        switch (true){
+            case $command instanceof RegisterCommand:
+
+                break;
+            case $command instanceof BetCommand || $command instanceof BetinfoCommand:
+                $command->setMatchRepo($this->matchRepo);
+                $command->setTeamRepo($this->teamRepo);
+                break;
+        }
+
+
+        return $command;
     }
 
-    public function commandStringFromMessage(TelegramMessage $message)
+    private function commandStringFromMessage(TelegramMessage $message)
     {
         $entity = array_get($message->getRawResponse(), 'entities.0');
 

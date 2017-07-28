@@ -20,17 +20,6 @@ class ResponseFactory
 {
     /** @var CommandFactory */
     private $commandFactory;
-    /** @var MatchRepository */
-    private $matchRepo;
-    /** @var TeamRepository */
-    private $teamRepo;
-
-    public function __construct(CommandFactory $commandFactory, MatchRepository $matchRepo, TeamRepository $teamRepo)
-    {
-        $this->commandFactory  = $commandFactory;
-        $this->matchRepo       = $matchRepo;
-        $this->teamRepo        = $teamRepo;
-    }
 
     public function createResponse(Chat $chat, CommandInterface $command = null): Response{
 
@@ -46,20 +35,6 @@ class ResponseFactory
             if ($chat->betstatus === BetFSM::STATUS_GOALS_ASKED){
                 $command = $this->commandFactory->createFromString("bet");
             }
-        }
-
-        // we have a command, give it its necessary repos
-        switch (true){
-            case $command instanceof RegisterCommand:
-
-                break;
-            case $command instanceof BetCommand:
-                $command->setMatchRepo($this->matchRepo);
-                $command->setTeamRepo($this->teamRepo);
-                break;
-            case is_null($command);
-                return new Response();
-
         }
 
         $response = $command->run($chat, $message);
