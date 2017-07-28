@@ -50,7 +50,7 @@ return [
             'regex'     => "Tipps bitte im Format XX:YY abgeben.\n(z.B. 3:2 oder 11:0), oder STOP schreiben",
             'done'      => 'Es gibt keine weiteren Spiele für die du Tipps abgeben kannst',
             'info'      => 'Dein Tipp für das Spiel %homeTeamName% gegen %awayTeamName% lautet: *%bet%*',
-            'stopped'   => 'Du hast die Tippeingabe unterbrochen. Es gibt noch *%num%* spiele auf die du tippen kannst.',
+            'stopped'   => 'Du hast die Tippeingabe unterbrochen.',
             'failed'    => 'Das Anlegen der Wette hat nicht funktioniert, probier es bitte nochmal oder schreib STOP'
         ],
         'betinfo' => [

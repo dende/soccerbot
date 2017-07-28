@@ -46,7 +46,6 @@ class BetCommand extends AbstractCommand
         $openMatches = $this->matchRepo->getOpenMatchesForChat($chat);
 
         if ($openMatches->isEmpty()){
-
             return new Response($lang->trans('command.bet.noMatches'));
         }
 
@@ -71,7 +70,7 @@ class BetCommand extends AbstractCommand
         return new Response($lang->trans('command.bet.yourBet', [
             '%homeTeamName%' => $homeTeam->name,
             '%awayTeamName%' => $awayTeam->name,
-            '%date%' => $match->date->format('m.d.'),
+            '%date%' => $match->date->format('d.m.Y'),
         ]), $keyboard);
 
     }
@@ -81,13 +80,13 @@ class BetCommand extends AbstractCommand
         $lang = $chat->getLang();
         $text = $message->getText();
         $fsm = $chat->getBetFsm();
-        $openMatches = $this->matchRepo->getOpenMatchesForChat($chat);
 
 
         if (strtoupper(trim($text)) == Bet::INPUT_STOP){
             $fsm->apply(BetFSM::TRANSITION_DONE);
-            $response = new Response($lang->trans('command.bet.stopped', ['%num%' => $openMatches->count()]));
+            $response = new Response($lang->trans('command.bet.stopped'));
         } else if (preg_match(Bet::REGEX_BET, $text)) {
+
             list($homeGoals, $awayGoals) = explode(':', $text);
 
             $bet = new Bet();
@@ -99,6 +98,7 @@ class BetCommand extends AbstractCommand
             try {
                 $bet->save();
             } catch (\Exception $e){
+                \Analog::log($e->getMessage(), \Analog::ERROR);
                 return new Response($lang->trans('command.bet.failed'));
             }
 
@@ -110,6 +110,7 @@ class BetCommand extends AbstractCommand
                 ]));
             $chat->current_bet_match_id = null;
 
+            $openMatches = $this->matchRepo->getOpenMatchesForChat($chat);
             if ($openMatches->isEmpty()){
                 $fsm->apply(BetFSM::TRANSITION_DONE);
                 $response->addLine($lang->trans('command.bet.done'));
@@ -123,7 +124,7 @@ class BetCommand extends AbstractCommand
                 $response->addLine($lang->trans('command.bet.yourBet', [
                     '%homeTeamName%' => $homeTeam->name,
                     '%awayTeamName%' => $awayTeam->name,
-                    '%date%' => $match->date->format('m.d.'),
+                    '%date%' => $match->date->format('d.m.Y'),
                 ]));
                 $keyboard = [
                     ['0:0', '0:1', '1:0'],

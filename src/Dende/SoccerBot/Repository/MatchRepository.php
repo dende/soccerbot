@@ -7,6 +7,7 @@ namespace Dende\SoccerBot\Repository;
 use Analog\Analog;
 use Carbon\Carbon;
 use Dende\SoccerBot\FootballData\Api as FootballDataApi;
+use Dende\SoccerBot\Model\Bet;
 use Dende\SoccerBot\Model\ChatInterface;
 use Dende\SoccerBot\Model\Match;
 use Dende\SoccerBot\Telegram\Message as TelegramMessage;
@@ -188,18 +189,29 @@ class MatchRepository
     }
 
     public function getOpenMatchesForChat(ChatInterface $chat){
-        $nextMatches = Match::where('status', '=', Match::STATUS_SCHEDULED)->orWhere('status', '=', Match::STATUS_TIMED)->orderBy('date', 'desc')->get();
-
-        //$bidMatches
+        /** @var \Illuminate\Database\Eloquent\Collection $nextMatches */
+        $nextMatches = Match::where('status', '=', Match::STATUS_SCHEDULED)->orWhere('status', '=', Match::STATUS_TIMED)->orderBy('date', 'asc')->get();
+        /** @var \Illuminate\Database\Eloquent\Collection $placedBets */
+        $placedBets = $chat->bets()->get();
         //todo exclude matches that are already in bets
-        $openMatches = new Collection();
 
-        foreach ($nextMatches as $match){
-            //if (!$bidMatches->contains($match)){
-            $openMatches->prepend($match);
-            //}
+        if ($placedBets->isNotEmpty()){
+            $openMatches = new Collection();
+
+            foreach ($nextMatches as $nextMatch){
+                Analog::debug("nextMatch id = " .$nextMatch->id);
+                foreach ($placedBets as $placedBet){
+                    Analog::debug("placedBet->match_id id = " .$placedBet->match_id);
+                    if ($nextMatch->id == $placedBet->match_id){
+                        continue 2;
+                    }
+                }
+                $openMatches->push($nextMatch);
+            }
+            return $openMatches;
+        } else {
+            return $nextMatches;
         }
 
-        return $openMatches;
     }
 }

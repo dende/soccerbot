@@ -122,4 +122,8 @@ class Chat extends Model implements ChatInterface
     {
         $this->registerstatus = $registerstatus;
     }
+
+    public function bets(){
+        return $this->hasMany('\Dende\SoccerBot\Model\Bet');
+    }
 }
